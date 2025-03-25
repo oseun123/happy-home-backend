@@ -15,20 +15,30 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|string|email|max:255|unique:users,email,NULL,id,deleted_at,NULL',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        $user = User::withTrashed()->where('email', $request->email)->first();
+
+        if ($user) {
+            $user->restore(); // Restores the soft-deleted user
+            $user->update([
+                'name' => $request->name,
+                'password' => Hash::make($request->password),
+            ]);
+        } else {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+        }
 
         return ResponseHelper::withSuccess(
             'Register successfully',
             [
-                'token' => $user->createToken('User-API Token')->plainTextToken
+                'token' => $user->createToken('User-API-Token')->plainTextToken
             ]
         );
     }
@@ -49,7 +59,7 @@ class AuthController extends Controller
         return ResponseHelper::withSuccess(
             'Register successfully',
             [
-                'token' => $request->user()->createToken('User-API Token')->plainTextToken
+                'token' => $request->user()->createToken('User-API-Token')->plainTextToken
             ]
         );
     }
