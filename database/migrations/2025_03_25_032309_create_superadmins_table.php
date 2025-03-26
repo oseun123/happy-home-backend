@@ -15,9 +15,10 @@ class CreateSuperadminsTable extends Migration
     {
         Schema::create('superadmins', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
+            $table->string('reset_token')->nullable();
+            $table->timestamp('reset_expires_at')->nullable();
             $table->timestamps();
         });
     }

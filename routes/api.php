@@ -3,7 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\SuperadminAuthController;
+use App\Http\Controllers\SuperAdminAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,16 +17,16 @@ use App\Http\Controllers\SuperadminAuthController;
 */
 
 
+
 // super admin routes
 Route::prefix('superadmin')->group(function () {
 
-    Route::post('/login', [SuperadminAuthController::class, 'login']);
+    Route::post('/login', [SuperAdminAuthController::class, 'login']);
+    Route::post('/forgot-password', [SuperAdminAuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [SuperAdminAuthController::class, 'resetPassword']);
 
     Route::middleware(['auth:sanctum', 'superadmin'])->group(function () {
-        Route::post('/logout', [SuperadminAuthController::class, 'logout']);
-        Route::get('/dashboard', function () {
-            return response()->json(['message' => 'Welcome, Superadmin']);
-        });
+        Route::post('/logout', [SuperAdminAuthController::class, 'logout']);
     });
 });
 
@@ -39,7 +39,10 @@ Route::prefix('superadmin')->group(function () {
 // users routes
 
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/verify', [AuthController::class, 'verify']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
