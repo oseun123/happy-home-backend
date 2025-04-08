@@ -49,4 +49,26 @@ class User extends Authenticatable implements AuditableContract
         'is_verified' => 'boolean',
         'verification_expires_at' => 'datetime',
     ];
+
+
+
+    public function personalProfile()
+    {
+        return $this->hasOne(PersonalProfile::class);
+    }
+
+    public function userBioData()
+    {
+        return $this->hasOne(UserBioData::class);
+    }
+
+    public function contact()
+    {
+        return $this->hasOne(UserContact::class);
+    }
+
+    public function hobbiesInterest()
+    {
+        return $this->hasOne(UserHobbiesInterest::class);
+    }
 }

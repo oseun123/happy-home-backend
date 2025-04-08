@@ -2,10 +2,12 @@
 
 namespace App\Exceptions;
 
-use Illuminate\Auth\AuthenticationException;
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
+use App\Helpers\ResponseHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 
 class Handler extends ExceptionHandler
 {
@@ -50,5 +52,16 @@ class Handler extends ExceptionHandler
             'status' => 'error',
             'message' => 'Authentication failed. Please login again.'
         ], JsonResponse::HTTP_UNAUTHORIZED);
+    }
+
+
+    public function render($request, Throwable $exception): JsonResponse
+    {
+        // Handle Model Not Found Exception
+        if ($exception instanceof ModelNotFoundException) {
+            return ResponseHelper::withError('Resource not found.', [], 404);
+        }
+
+        return parent::render($request, $exception);
     }
 }

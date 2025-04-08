@@ -122,6 +122,8 @@ return [
     'key' => env('APP_KEY'),
 
     'cipher' => 'AES-256-CBC',
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
+
 
     /*
     |--------------------------------------------------------------------------
@@ -174,6 +176,9 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        Unicodeveloper\Paystack\PaystackServiceProvider::class,
+        CloudinaryLabs\CloudinaryLaravel\CloudinaryServiceProvider::class,
+
 
     ],
 
