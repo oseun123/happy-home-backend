@@ -10,6 +10,12 @@ class SettingSeeder extends Seeder
     public function run()
     {
         Setting::create([
+            'key' => 'subscribe_amount',
+            'value' => [
+                "1000",
+            ],
+        ]);
+        Setting::create([
             'key' => 'height_range',
             'value' => [
                 "Under 4'0",

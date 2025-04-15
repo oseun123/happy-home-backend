@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Helpers\ResponseHelper;
 use Illuminate\Support\Facades\Http;
 use Unicodeveloper\Paystack\Facades\Paystack;
+use App\Notifications\SubscribedNotification;
 
 class SubscriptionController extends Controller
 {
@@ -63,14 +64,15 @@ class SubscriptionController extends Controller
     }
 
 
+
+
+
     public function verifyPayment(Request $request)
     {
-        $request->validate([
-            'reference' => 'required|string',
-        ]);
+        $request->validate(['reference' => 'required|string']);
 
         $reference = $request->reference;
-        $paystackSecretKey = config('paystack.secretKey'); // Ensure this is set in your .env
+        $paystackSecretKey = config('paystack.secretKey');
 
         try {
             $response = Http::withHeaders([
@@ -80,35 +82,53 @@ class SubscriptionController extends Controller
 
             $paymentDetails = $response->json();
 
-
             if ($paymentDetails['data']['status'] === 'success') {
-                // dd($paymentDetails);
-
                 $data = $paymentDetails['data'];
 
-                Subscription::create([
-                    'subscriber_id' => $data['metadata']['subscriber_id'],
-                    'subscribed_to_id' => $data['metadata']['subscribed_to_id'],
+                $subscriberId = $data['metadata']['subscriber_id'];
+                $subscribedToId = $data['metadata']['subscribed_to_id'];
+
+                $subscription = Subscription::create([
+                    'subscriber_id' => $subscriberId,
+                    'subscribed_to_id' => $subscribedToId,
                     'amount_paid' => $data['amount'],
                     'verified' => true,
                     'verified_at' => now(),
                     'subscribed_at' => now(),
+                    'fully_subscribed' => false,
                 ]);
+
+                // Check if the subscribed user has also subscribed back
+                $mutual = Subscription::where('subscriber_id', $subscribedToId)
+                    ->where('subscribed_to_id', $subscriberId)
+                    ->where('verified', true)
+                    ->first();
+
+                if ($mutual) {
+                    Subscription::where('id', $subscription->id)->update(['fully_subscribed' => true]);
+                    Subscription::where('id', $mutual->id)->update(['fully_subscribed' => true]);
+                }
+
+                // Notify the subscribed user
+                $subscribedUser = User::find($subscribedToId);
+                $subscriber = User::find($subscriberId);
+
+                $subscribedUser->notify(new SubscribedNotification($subscriber));
 
                 return ResponseHelper::withSuccess('Payment verified', [
                     'status' => 'success',
                     'data' => $paymentDetails
                 ]);
-            } else {
-                return ResponseHelper::withError('Payment failed', [
-                    'status' => 'failed',
-                    'message' => $paymentDetails['message'] ?? 'Transaction not successful'
-                ]);
             }
+
+            return ResponseHelper::withError('Payment failed', [
+                'status' => 'failed',
+                'message' => $paymentDetails['message'] ?? 'Transaction not successful'
+            ]);
         } catch (\Exception $e) {
             return ResponseHelper::withError('Verification failed', [
                 'status' => 'error',
-                'message' => 'Invalid reference or network issue'
+                'message' => $e->getMessage()
             ]);
         }
     }

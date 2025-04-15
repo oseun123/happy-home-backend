@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Helpers\ResponseHelper;
 
+
 class MatchmakingController extends Controller
 {
 
@@ -137,16 +138,33 @@ class MatchmakingController extends Controller
 
     protected function formatUserData(User $otherUser, User $currentUser)
     {
+        $isSubscribedByMe = $currentUser->subscriptions()
+            ->where('subscribed_to_id', $otherUser->id)
+            ->where('verified', true)
+            ->exists();
+
+        $hasSubscribedToMe = $currentUser->subscribers()
+            ->where('subscriber_id', $otherUser->id)
+            ->where('verified', true)
+            ->exists();
+
+        $isMutuallySubscribed = $isSubscribedByMe && $hasSubscribedToMe;
+
         return [
             'id' => $otherUser->id,
             'name' => $otherUser->name,
-            'email' => $otherUser->email,
+            'email' => $isMutuallySubscribed ? $otherUser->email : null,
             'nationality' => optional($otherUser->contact)->nationality,
             'state' => optional($otherUser->contact)->state,
             'age' => $this->calculateAge(optional($otherUser->personalProfile)->date_of_birth),
-            'is_favorited' => $currentUser->favorites()->where('favorite_user_id', $otherUser->id)->exists()
+            'is_favorited' => $currentUser->favorites()->where('favorite_user_id', $otherUser->id)->exists(),
+            'is_subscribed_by_me' => $isSubscribedByMe,
+            'has_subscribed_to_me' => $hasSubscribedToMe
         ];
     }
+
+
+
 
     protected function calculateAge($dateOfBirth)
     {
