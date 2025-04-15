@@ -22,7 +22,7 @@ class CreateUserContactsTable extends Migration
             $table->string('lga');
             $table->string('postal_code');
             $table->string('state');
-            $table->string('country');
+            $table->string('nationality');
             $table->timestamps();
         });
     }

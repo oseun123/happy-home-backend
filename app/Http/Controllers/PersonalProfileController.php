@@ -69,7 +69,8 @@ class PersonalProfileController extends Controller
             if (!$profile) {
                 throw new \Exception('Failed to create personal profile.');
             }
-
+            // set user default settings
+            $this->userSetting($user);
             DB::commit(); // Save all changes
 
             return ResponseHelper::withSuccess('Personal profile created successfully.', $profile);
@@ -79,60 +80,84 @@ class PersonalProfileController extends Controller
         }
     }
 
+    private function fetchAndStorePersonalProfile($phone_number, $user, $photoUrl)
+    {
+        // dd(env('DOJAH_VERIFY_PHONE_URL'), env('DOJAH_APP_ID'), env('DOJAH_SECRET_KEY'));
+        $response = Http::withHeaders([
+            'Accept' => 'application/json',
+            'AppId' => env('DOJAH_APP_ID'),
+            'Authorization' => env('DOJAH_SECRET_KEY'),
+        ])->get(env('DOJAH_VERIFY_PHONE_URL'), [
+            'phone_number' => $phone_number,
+            'country_code' => 'NG', // Change as needed
+        ]);
+
+
+        $data = $response->json();
+        // dd($data, isset($data['entity']));
+
+
+
+        if (!isset($data['entity'])) {
+            return null; // Returning null instead of error response
+        }
+
+        return PersonalProfile::create([
+            'user_id' => $user->id,
+            'first_name' => $data['entity']['first_name'] ?? null,
+            'last_name' => $data['entity']['last_name'] ?? null,
+            'middle_name' => $data['entity']['middle_name'] ?? null,
+            'date_of_birth' => $data['entity']['date_of_birth'] ?? null,
+            'phone_number' => $data['entity']['phone_number'],
+            'gender' => $data['entity']['gender'] ?? null,
+            'photo' => $photoUrl, // Save photo URL
+        ]);
+    }
+
+
     // private function fetchAndStorePersonalProfile($phone_number, $user, $photoUrl)
     // {
-    //     $response = Http::withHeaders([
-    //         'Accept' => 'application/json',
-    //         'AppId' => env('DOJAH_APP_ID'),
-    //         'Authorization' => env('DOJAH_SECRET_KEY'),
-    //     ])->get('https://api.dojah.io/api/v1/kyc/phone-number', [
+    //     $faker = \Faker\Factory::create();
+
+    //     // Generate fake user details
+    //     $fakeData = [
+    //         'first_name' => $faker->firstName(),
+    //         'last_name' => $faker->lastName(),
+    //         'middle_name' => $faker->optional()->firstName(),
+    //         'date_of_birth' => $faker->date('Y-m-d', '-20 years'), // Random DOB, at least 20 years old
     //         'phone_number' => $phone_number,
-    //         'country_code' => 'NG', // Change as needed
-    //     ]);
+    //         'gender' => $faker->randomElement(['M', 'F', 'MF']),
+    //     ];
 
-    //     $data = $response->json();
-
-    //     if (!isset($data['status']) || $data['status'] !== 'success' || !isset($data['entity'])) {
-    //         return null; // Returning null instead of error response
-    //     }
-
+    //     // Store in the database
     //     return PersonalProfile::create([
     //         'user_id' => $user->id,
-    //         'first_name' => $data['entity']['first_name'] ?? null,
-    //         'last_name' => $data['entity']['last_name'] ?? null,
-    //         'middle_name' => $data['entity']['middle_name'] ?? null,
-    //         'date_of_birth' => $data['entity']['date_of_birth'] ?? null,
-    //         'phone_number' => $data['entity']['phone_number'],
-    //         'gender' => $data['entity']['gender'] ?? null,
-    //         'photo' => $photoUrl, // Save photo URL
+    //         'first_name' => $fakeData['first_name'],
+    //         'last_name' => $fakeData['last_name'],
+    //         'middle_name' => $fakeData['middle_name'],
+    //         'date_of_birth' => $fakeData['date_of_birth'],
+    //         'phone_number' => $fakeData['phone_number'],
+    //         'gender' => $fakeData['gender'],
+    //         'photo' => $photoUrl, // Store the uploaded photo URL
     //     ]);
     // }
 
 
-    private function fetchAndStorePersonalProfile($phone_number, $user, $photoUrl)
+    private function userSetting($user)
     {
-        $faker = \Faker\Factory::create();
 
-        // Generate fake user details
-        $fakeData = [
-            'first_name' => $faker->firstName(),
-            'last_name' => $faker->lastName(),
-            'middle_name' => $faker->optional()->firstName(),
-            'date_of_birth' => $faker->date('Y-m-d', '-20 years'), // Random DOB, at least 20 years old
-            'phone_number' => $phone_number,
-            'gender' => $faker->randomElement(['M', 'F', 'MF']),
-        ];
-
-        // Store in the database
-        return PersonalProfile::create([
-            'user_id' => $user->id,
-            'first_name' => $fakeData['first_name'],
-            'last_name' => $fakeData['last_name'],
-            'middle_name' => $fakeData['middle_name'],
-            'date_of_birth' => $fakeData['date_of_birth'],
-            'phone_number' => $fakeData['phone_number'],
-            'gender' => $fakeData['gender'],
-            'photo' => $photoUrl, // Store the uploaded photo URL
+        $user->settings()->create([
+            'hide_age' => false,
+            'hide_location' => false,
+            'matchup_settings' => 70,
+            'notify_me' => true,
+            'deactive_account' => false,
+            'short_bio' => null,
+            'cover_photo' => null,
+            'photo_1' => null,
+            'photo_2' => null,
+            'photo_3' => null,
+            'photo_4' => null,
         ]);
     }
 }

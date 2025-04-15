@@ -20,7 +20,7 @@ class UserContact extends Model implements AuditableContract
         'lga',
         'postal_code',
         'state',
-        'country',
+        'nationality',
     ];
 
     public function user(): BelongsTo

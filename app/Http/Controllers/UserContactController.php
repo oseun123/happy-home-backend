@@ -28,7 +28,7 @@ class UserContactController extends Controller
             'lga' => 'required|string',
             'postal_code' => 'required|string',
             'state' => 'required|string',
-            'country' => 'required|string',
+            'nationality' => 'required|string',
         ]);
 
         if ($user->contact) {
@@ -68,7 +68,7 @@ class UserContactController extends Controller
             'lga' => 'sometimes|required|string',
             'postal_code' => 'sometimes|required|string',
             'state' => 'sometimes|required|string',
-            'country' => 'sometimes|required|string',
+            'nationality' => 'sometimes|required|string',
         ]);
 
         $contact->update($request->all());

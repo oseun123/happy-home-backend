@@ -14,6 +14,7 @@ class UserPreferredMatch extends Model
         'relationship_type',
         'gender',
         'age_range',
+        'height_range',
         'marital_status',
         'ethnicity',
         'genotype',
@@ -24,6 +25,7 @@ class UserPreferredMatch extends Model
     protected $casts = [
         'gender' => 'array',
         'age_range' => 'array',
+        'height_range' => 'array',
         'marital_status' => 'array',
         'ethnicity' => 'array',
         'genotype' => 'array',

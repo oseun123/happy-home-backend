@@ -3,10 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SettingController;
-use App\Http\Controllers\PaystackController;
-use App\Http\Controllers\UserBioDataController;
+use App\Http\Controllers\FavoriteController;
 
+use App\Http\Controllers\MatchmakingController;
+use App\Http\Controllers\UserBioDataController;
 use App\Http\Controllers\UserContactController;
+use App\Http\Controllers\UserSettingController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\PersonalProfileController;
 use App\Http\Controllers\UserPreferredMatchController;
 use App\Http\Controllers\UserHobbiesInterestController;
@@ -63,6 +66,29 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
 
+    // User settings management
+    Route::prefix('users/{user}/settings')->group(function () {
+        Route::post('/', [UserSettingController::class, 'store']);
+        Route::get('/', [UserSettingController::class, 'show']);
+        Route::patch('{field}', [UserSettingController::class, 'updateField']);
+        Route::post('photos/{field}', [UserSettingController::class, 'updatePhoto']);
+    });
+
+
+    Route::prefix('/users/{user}/dashboard')->group(function () {
+        Route::get('/matches', [MatchmakingController::class, 'getUserMatches']);
+
+        Route::post('favorite/{targetUserId}', [FavoriteController::class, 'toggleFavorite']);
+        Route::get('favorites', [MatchmakingController::class, 'getFavoritesWithMatchScore']);
+        Route::get('subscription', [MatchmakingController::class, 'getSubscriptionWithMatchScore']);
+        Route::get('intrested', [MatchmakingController::class, 'getInterestedWithMatchScore']);
+        Route::get('mutuals', [MatchmakingController::class, 'getMutaulsWithMatchScore']);
+    });
+
+
+
+
+
 
 
 
@@ -73,8 +99,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // payment routes
     Route::prefix('paystack')->group(function () {
 
-        Route::post('/{user}/initialize', [PaystackController::class, 'initializePayment']);
+        Route::post('/{user}/initialize', [SubscriptionController::class, 'initializePayment']);
 
-        Route::post('/verify', [PaystackController::class, 'verifyPayment']);
+        Route::post('/verify', [SubscriptionController::class, 'verifyPayment']);
     });
 });

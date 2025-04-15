@@ -20,6 +20,7 @@ class UserPreferredMatches extends Migration
             $table->string('relationship_type');
             $table->json('gender')->nullable();
             $table->json('age_range')->nullable();
+            $table->json('height_range')->nullable();
             $table->json('marital_status')->nullable();
             $table->json('ethnicity')->nullable();
             $table->json('genotype')->nullable();
