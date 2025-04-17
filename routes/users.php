@@ -8,12 +8,13 @@ use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\MatchmakingController;
 use App\Http\Controllers\UserBioDataController;
 use App\Http\Controllers\UserContactController;
+use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\UserSettingController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\VerifyAddressController;
 use App\Http\Controllers\PersonalProfileController;
 use App\Http\Controllers\UserPreferredMatchController;
 use App\Http\Controllers\UserHobbiesInterestController;
-
 
 // users routes
 
@@ -78,7 +79,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('/users/{user}/dashboard')->group(function () {
         Route::get('/matches', [MatchmakingController::class, 'getUserMatches']);
 
+        Route::post('nugde', [SubscriptionController::class, 'sendNudge']);
         Route::post('favorite/{targetUserId}', [FavoriteController::class, 'toggleFavorite']);
+        Route::get('profile/{targetUserId}', [UserProfileController::class, 'userProfile']);
         Route::get('favorites', [MatchmakingController::class, 'getFavoritesWithMatchScore']);
         Route::get('subscription', [MatchmakingController::class, 'getSubscriptionWithMatchScore']);
         Route::get('intrested', [MatchmakingController::class, 'getInterestedWithMatchScore']);
@@ -100,6 +103,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('paystack')->group(function () {
 
         Route::post('/{user}/initialize', [SubscriptionController::class, 'initializePayment']);
+        Route::post('address/{user}/initialize', [VerifyAddressController::class, 'verify']);
 
         Route::post('/verify', [SubscriptionController::class, 'verifyPayment']);
     });

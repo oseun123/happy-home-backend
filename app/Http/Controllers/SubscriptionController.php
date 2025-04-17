@@ -7,9 +7,11 @@ use App\Models\Setting;
 use App\Models\Subscription;
 use Illuminate\Http\Request;
 use App\Helpers\ResponseHelper;
+use App\Notifications\NudgeReminder;
 use Illuminate\Support\Facades\Http;
-use Unicodeveloper\Paystack\Facades\Paystack;
 use App\Notifications\SubscribedNotification;
+use Unicodeveloper\Paystack\Facades\Paystack;
+use App\Notifications\SubscriptionConfirmedNotification;
 
 class SubscriptionController extends Controller
 {
@@ -37,31 +39,110 @@ class SubscriptionController extends Controller
         if ($alreadySubscribed) {
             return ResponseHelper::withError('Already subscribed');
         }
-        // Get subscribe amount from settings
-        $amountSetting = Setting::where('key', 'subscribe_amount')->value('value')[0];
-        $amountInKobo = (int) $amountSetting * 100;
 
+        //Check for available free retry
+        $freeRetry = Subscription::withTrashed()->where('subscriber_id', $subscriber->id)
+            ->where('fully_subscribed', false)
+            ->where('verified', true)
+            ->where('free_retry_used', false)
+            ->where('free_retry_granted', true) // make sure this isn't already a free retry
+            ->first();
+
+        // return ($freeRetry);
+
+
+
+        $isUsingFreeRetry = false;
+        $amountInKobo = 0;
+
+        if ($freeRetry) {
+            $isUsingFreeRetry = true;
+            // Mark the original subscription so we don't reuse it again
+            $freeRetry->update(['free_retry_used' => true]);
+        } else {
+            // Regular flow with payment
+            $amountSetting = (int) Setting::where('key', 'subscribe_amount')->value('value')[0];
+            $amountInKobo = (int) $amountSetting * 100;
+        }
+
+        // Prepare metadata
+        $metadata = [
+            'subscriber_id' => $subscriber->id,
+            'subscribed_to_id' => $subscribedToId,
+
+        ];
+
+        if ($isUsingFreeRetry) {
+            // Skip payment step, return immediate approval
+
+            $subscribeDays = (int) Setting::where('key', 'subscribe_day')->value('value')[0] ?? 3;
+
+            $subscription = Subscription::create([
+                'subscriber_id' => $subscriber->id,
+                'subscribed_to_id' => $subscribedToId,
+                'amount_paid' => 0,
+                'verified' => true,
+                'verified_at' => now(),
+                'subscribed_at' => now(),
+                'fully_subscribed' => false,
+                'reciprocation_deadline' => now()->addDays($subscribeDays),
+                'is_free_retry' => true,
+            ]);
+
+
+            // Notify the subscribed user
+            $subscribedUser = User::find($subscribedToId);
+
+            $subscribedUser->notify(new SubscribedNotification($subscriber));
+            $subscriber->notify(new SubscriptionConfirmedNotification($subscribedUser));
+
+
+
+
+            // Check mutuality
+            $mutual = Subscription::where('subscriber_id', $subscribedToId)
+                ->where('subscribed_to_id', $subscriber->id)
+                ->where('verified', true)
+                ->first();
+
+            if ($mutual) {
+                $subscription->update(['fully_subscribed' => true]);
+                $mutual->update(['fully_subscribed' => true]);
+            }
+
+            // Notify subscribed user
+            $subscribedUser = User::find($subscribedToId);
+            $subscribedUser->notify(new SubscribedNotification($subscriber));
+
+            return ResponseHelper::withSuccess("Subscribed using free retry");
+        }
+
+        // Continue with Paystack payment if not using free retry
         $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
 
         $data = [
-            "amount" => $amountInKobo, // Paystack expects amount in kobo
+            "amount" => $amountInKobo,
             "email" => $subscriber->email,
             "currency" => "NGN",
             "reference" => Paystack::genTranxRef(),
             "callback_url" => $frontendUrl . '/verify-payment',
-            'metadata' => [
-                'subscriber_id' => $subscriber->id,
-                'subscribed_to_id' => $subscribedToId,
-            ]
+            'metadata' => $metadata
         ];
 
         try {
             $response = Paystack::getAuthorizationUrl($data)->url;
-            return ResponseHelper::withSuccess("Initialize successfully", ['status' => 'success', 'authorization_url' => $response]);
+            return ResponseHelper::withSuccess("Initialize successfully", [
+                'status' => 'success',
+                'authorization_url' => $response
+            ]);
         } catch (\Exception $e) {
-            return ResponseHelper::withError('Failed to initialize', ['status' => 'error', 'message' => 'Payment initialization failed']);
+            return ResponseHelper::withError('Failed to initialize', [
+                'status' => 'error',
+                'message' => 'Payment initialization failed'
+            ]);
         }
     }
+
 
 
 
@@ -88,6 +169,10 @@ class SubscriptionController extends Controller
                 $subscriberId = $data['metadata']['subscriber_id'];
                 $subscribedToId = $data['metadata']['subscribed_to_id'];
 
+                $subscribeDays = (int) Setting::where('key', 'subscribe_day')->value('value')[0] ?? 3;
+                // $isFreeRetry = (bool) $data['metadata']['is_free_retry'] ?? false;
+                // 'is_free_retry' => (bool) ($data['metadata']['is_free_retry'] ?? false),
+
                 $subscription = Subscription::create([
                     'subscriber_id' => $subscriberId,
                     'subscribed_to_id' => $subscribedToId,
@@ -96,7 +181,10 @@ class SubscriptionController extends Controller
                     'verified_at' => now(),
                     'subscribed_at' => now(),
                     'fully_subscribed' => false,
+                    'reciprocation_deadline' => now()->addDays($subscribeDays),
+                    'data' => json_encode($paymentDetails['data'])
                 ]);
+
 
                 // Check if the subscribed user has also subscribed back
                 $mutual = Subscription::where('subscriber_id', $subscribedToId)
@@ -114,6 +202,7 @@ class SubscriptionController extends Controller
                 $subscriber = User::find($subscriberId);
 
                 $subscribedUser->notify(new SubscribedNotification($subscriber));
+                $subscriber->notify(new SubscriptionConfirmedNotification($subscribedUser));
 
                 return ResponseHelper::withSuccess('Payment verified', [
                     'status' => 'success',
@@ -131,5 +220,32 @@ class SubscriptionController extends Controller
                 'message' => $e->getMessage()
             ]);
         }
+    }
+
+
+    public function sendNudge(Request $request, User $user)
+    {
+        $request->validate(['subscribed_to_id' => 'required|exists:users,id']);
+
+        $subscriber = $user;
+        $subscribedToId = $request->subscribed_to_id;
+
+        $subscription = Subscription::where('subscriber_id', $subscriber->id)
+            ->where('subscribed_to_id', $subscribedToId)
+            ->where('verified', true)
+            ->firstOrFail();
+
+        $nudge = $subscription->nudge()->firstOrCreate([]);
+
+        if ($nudge->count >= 2) {
+            return ResponseHelper::withError('You can only nudge twice.');
+        }
+
+        $nudge->increment('count');
+
+        $subscribedUser = User::findOrFail($subscribedToId);
+        $subscribedUser->notify(new NudgeReminder($subscriber));
+
+        return ResponseHelper::withSuccess('Nudge sent successfully.');
     }
 }

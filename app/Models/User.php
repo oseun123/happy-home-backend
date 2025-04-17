@@ -102,6 +102,8 @@ class User extends Authenticatable implements AuditableContract
             ->withTimestamps();
     }
 
+
+
     // Users who subscribed to me
     public function subscribers()
     {
@@ -109,5 +111,71 @@ class User extends Authenticatable implements AuditableContract
             ->withPivot(['amount_paid', 'verified', 'verified_at', 'subscribed_at'])
             ->wherePivot('verified', true)
             ->withTimestamps();
+    }
+
+
+    public function hasSubscribedTo(User $otherUser)
+    {
+        return $this->subscriptions()
+            ->where('subscribed_to_id', $otherUser->id)
+            ->where('verified', true)
+            ->exists();
+    }
+
+    public function isSubscribedBy(User $otherUser)
+    {
+        return $this->subscribers()
+            ->where('subscriber_id', $otherUser->id)
+            ->where('verified', true)
+            ->exists();
+    }
+
+    public function isMutuallySubscribedWith(User $otherUser)
+    {
+        return $this->hasSubscribedTo($otherUser) && $this->isSubscribedBy($otherUser);
+    }
+
+    public function hasFavorited(User $otherUser)
+    {
+        return $this->favorites()
+            ->where('favorite_user_id', $otherUser->id)
+            ->exists();
+    }
+
+    public function isFavoritedBy(User $otherUser)
+    {
+        return $this->favoritedBy()
+            ->where('user_id', $otherUser->id)
+            ->exists();
+    }
+    public function subscriptionRecords()
+    {
+        return $this->hasMany(Subscription::class, 'subscriber_id');
+    }
+
+    public function availableFreeRetry()
+    {
+        return $this->subscriptionRecords()
+            ->onlyTrashed()
+            ->where('free_retry_granted', true)
+            ->where('free_retry_used', false)
+            ->orderByDesc('free_retry_available_at')
+            ->first();
+    }
+
+    public function countAvailableRetries()
+    {
+        return $this->subscriptionRecords()
+            ->onlyTrashed()
+            ->where('free_retry_granted', true)
+            ->where('free_retry_used', false)
+            ->count();
+    }
+
+    public function totalRetriesUsed()
+    {
+        return $this->subscriptionRecords()
+            ->where('is_free_retry', true)
+            ->count();
     }
 }

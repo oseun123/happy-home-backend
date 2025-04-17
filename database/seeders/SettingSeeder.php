@@ -15,6 +15,13 @@ class SettingSeeder extends Seeder
                 "1000",
             ],
         ]);
+
+        Setting::create([
+            'key' => 'subscribe_day',
+            'value' => [
+                "7",
+            ],
+        ]);
         Setting::create([
             'key' => 'height_range',
             'value' => [

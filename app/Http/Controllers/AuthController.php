@@ -105,7 +105,8 @@ class AuthController extends Controller
         return ResponseHelper::withSuccess(
             'Login successfully',
             [
-                'token' => $request->user()->createToken('User-API-Token')->plainTextToken
+                'token' => $request->user()->createToken('User-API-Token')->plainTextToken,
+                'profile' => (new UserProfileController)->userProfileLogin($request->user(), $request->user()->id)
             ]
         );
     }

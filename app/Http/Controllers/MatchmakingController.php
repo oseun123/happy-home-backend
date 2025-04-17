@@ -138,28 +138,24 @@ class MatchmakingController extends Controller
 
     protected function formatUserData(User $otherUser, User $currentUser)
     {
-        $isSubscribedByMe = $currentUser->subscriptions()
-            ->where('subscribed_to_id', $otherUser->id)
-            ->where('verified', true)
-            ->exists();
+        $isSubscribedByMe = $currentUser->hasSubscribedTo($otherUser);
+        $hasSubscribedToMe = $currentUser->isSubscribedBy($otherUser);
+        // $isMutuallySubscribed = $currentUser->isMutuallySubscribedWith($otherUser);
+        $isFavoritedByMe = $currentUser->hasFavorited($otherUser);
 
-        $hasSubscribedToMe = $currentUser->subscribers()
-            ->where('subscriber_id', $otherUser->id)
-            ->where('verified', true)
-            ->exists();
-
-        $isMutuallySubscribed = $isSubscribedByMe && $hasSubscribedToMe;
 
         return [
             'id' => $otherUser->id,
-            'name' => $otherUser->name,
-            'email' => $isMutuallySubscribed ? $otherUser->email : null,
-            'nationality' => optional($otherUser->contact)->nationality,
-            'state' => optional($otherUser->contact)->state,
-            'age' => $this->calculateAge(optional($otherUser->personalProfile)->date_of_birth),
-            'is_favorited' => $currentUser->favorites()->where('favorite_user_id', $otherUser->id)->exists(),
+            'name' => $otherUser->personalProfile->first_name,
+            'photo' => optional($otherUser->personalProfile)->photo,
+            'cover_photo' => optional($otherUser->settings)->cover_photo,
+            'short_bio' => optional($otherUser->settings)->short_bio,
+            'state' =>  !$otherUser->settings->hide_location ? optional($otherUser->contact)->state : null,
+            'age' => !$otherUser->settings->hide_age ? $this->calculateAge(optional($otherUser->personalProfile)->date_of_birth) : null,
+            'is_favorited_by_me' => $isFavoritedByMe,
             'is_subscribed_by_me' => $isSubscribedByMe,
-            'has_subscribed_to_me' => $hasSubscribedToMe
+            'has_subscribed_to_me' => $hasSubscribedToMe,
+            'is_verified' => false
         ];
     }
 
