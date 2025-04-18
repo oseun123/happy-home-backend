@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Helpers\ResponseHelper;
 use App\Notifications\NudgeReminder;
 use Illuminate\Support\Facades\Http;
+use App\Notifications\BlockStatusChanged;
 use App\Notifications\SubscribedNotification;
 use Unicodeveloper\Paystack\Facades\Paystack;
 use App\Notifications\SubscriptionConfirmedNotification;
@@ -247,5 +248,38 @@ class SubscriptionController extends Controller
         $subscribedUser->notify(new NudgeReminder($subscriber));
 
         return ResponseHelper::withSuccess('Nudge sent successfully.');
+    }
+
+
+
+    public function toggleBlock(Request $request, User $user, User $subscribedTo)
+    {
+
+        // Ensure mutual subscription exists
+        $userSub = Subscription::where('subscriber_id', $user->id)
+            ->where('subscribed_to_id', $subscribedTo->id)
+            ->where('verified', true)
+            ->where('fully_subscribed', true)
+            ->first();
+
+        $subToUser = Subscription::where('subscriber_id', $subscribedTo->id)
+            ->where('subscribed_to_id', $user->id)
+            ->where('verified', true)
+            ->where('fully_subscribed', true)
+            ->first();
+
+        if (!$userSub || !$subToUser) {
+            return ResponseHelper::withError('Blocking is only allowed between mutual subscriptions.');
+        }
+
+        // Toggle block
+        $userSub->is_blocked = !$userSub->is_blocked;
+        $userSub->save();
+
+        $status = $userSub->is_blocked ? 'blocked' : 'unblocked';
+
+        $subscribedTo->notify(new BlockStatusChanged($user, $userSub->is_blocked));
+
+        return ResponseHelper::withSuccess("User successfully {$status}.");
     }
 }

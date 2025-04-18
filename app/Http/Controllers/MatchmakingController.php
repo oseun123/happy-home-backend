@@ -14,7 +14,8 @@ class MatchmakingController extends Controller
 
     public function getUserMatches(Request $request, User $user)
     {
-        // Step 2: Get potential matches with relationships
+        $search = $request->query('search');
+
         $potentialMatches = User::with([
             'userBioData.religions',
             'contact',
@@ -22,8 +23,24 @@ class MatchmakingController extends Controller
         ])
             ->where('id', '!=', $user->id);
 
-        return   $this->innerLogic($request, $user, $potentialMatches);
+        // for search query
+
+        if ($search) {
+            $potentialMatches->whereHas('personalProfile', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('first_name', 'like', '%' . $search . '%')
+                        ->orWhere('last_name', 'like', '%' . $search . '%')
+                        ->orWhere('middle_name', 'like', '%' . $search . '%');
+                });
+            });
+        }
+
+        return $this->innerLogic($request, $user, $potentialMatches);
     }
+
+
+
+
 
 
     private function innerLogic($request, $user, $potentialMatches)
@@ -140,10 +157,9 @@ class MatchmakingController extends Controller
     {
         $isSubscribedByMe = $currentUser->hasSubscribedTo($otherUser);
         $hasSubscribedToMe = $currentUser->isSubscribedBy($otherUser);
-        // $isMutuallySubscribed = $currentUser->isMutuallySubscribedWith($otherUser);
+        $isMutuallySubscribed = $currentUser->isMutuallySubscribedWith($otherUser);
         $isFavoritedByMe = $currentUser->hasFavorited($otherUser);
-
-
+        $is_blocked = $currentUser->hasBlocked($otherUser);
         return [
             'id' => $otherUser->id,
             'name' => $otherUser->personalProfile->first_name,
@@ -155,7 +171,9 @@ class MatchmakingController extends Controller
             'is_favorited_by_me' => $isFavoritedByMe,
             'is_subscribed_by_me' => $isSubscribedByMe,
             'has_subscribed_to_me' => $hasSubscribedToMe,
-            'is_verified' => false
+            'is_mutaul_to_me' => $isMutuallySubscribed,
+            'is_address_verified' => false, // temporary
+            'is_blocked_by_me' => $is_blocked
         ];
     }
 

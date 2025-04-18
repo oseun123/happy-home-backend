@@ -141,6 +141,19 @@ class User extends Authenticatable implements AuditableContract
             ->where('favorite_user_id', $otherUser->id)
             ->exists();
     }
+    public function hasBlocked(User $otherUser): bool
+    {
+        if (!$this->isMutuallySubscribedWith($otherUser)) {
+            return false;
+        }
+
+        return Subscription::where('subscriber_id', $this->id)
+            ->where('subscribed_to_id', $otherUser->id)
+            ->where('verified', true)
+            ->where('is_blocked', true)
+            ->exists();
+    }
+
 
     public function isFavoritedBy(User $otherUser)
     {

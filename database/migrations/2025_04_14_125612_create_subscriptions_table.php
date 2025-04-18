@@ -30,6 +30,7 @@ class CreateSubscriptionsTable extends Migration
             $table->boolean('used_free_retry')->default(false);
             $table->boolean('free_retry_granted')->default(false);
             $table->timestamp('reciprocation_deadline')->nullable();
+            $table->boolean('is_blocked')->default(false);
             $table->json('data')->nullable();
 
             $table->timestamps();

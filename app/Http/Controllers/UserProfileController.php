@@ -22,6 +22,15 @@ class UserProfileController extends Controller
             return ResponseHelper::withError('Invalid user');
         }
 
+        $is_blocked = $otherUser->hasBlocked($user);
+
+        // dd($is_blocked);
+
+        if ($is_blocked) {
+
+            return ResponseHelper::withError('You have been blocked to view this profile.');
+        }
+
         $is_mutual = $user->isMutuallySubscribedWith($otherUser);
 
         $profile = [
