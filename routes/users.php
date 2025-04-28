@@ -2,14 +2,16 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\SettingController;
-use App\Http\Controllers\FavoriteController;
 
+use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\MatchmakingController;
 use App\Http\Controllers\UserBioDataController;
 use App\Http\Controllers\UserContactController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\UserSettingController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\VerifyAddressController;
 use App\Http\Controllers\PersonalProfileController;
@@ -30,8 +32,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/settings/{key}', [SettingController::class, 'show']);
-
-
+    // delete account
+    Route::post('/account/request-deletion', [AccountController::class, 'requestAccountDeletion']);
+    Route::post('/account/cancel-deletion', [AccountController::class, 'cancelAccountDeletion']);
 
     // setup routes
     Route::get('users/hobbies-interests', [UserHobbiesInterestController::class, 'index']);
@@ -90,6 +93,15 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
 
+    Route::prefix('notifications')->group(function () {
+
+        Route::get('latest', [NotificationController::class, 'latestNotifications']);
+        Route::post('mark-as-read/{id}', [NotificationController::class, 'markAsRead']);
+        Route::post('clear', [NotificationController::class, 'clearNotifications']);
+        Route::post('mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    });
+
+
 
 
 
@@ -102,10 +114,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // payment routes
     Route::prefix('paystack')->group(function () {
-
+        // subscription
         Route::post('/{user}/initialize', [SubscriptionController::class, 'initializePayment']);
-        Route::post('address/{user}/initialize', [VerifyAddressController::class, 'verify']);
-
         Route::post('/verify', [SubscriptionController::class, 'verifyPayment']);
+
+        // address verification
+        Route::post('address/{user}/initialize', [VerifyAddressController::class, 'initializePayment']);
+        Route::post('address/verify', [VerifyAddressController::class, 'verifyPayment']);
     });
 });

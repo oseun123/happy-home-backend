@@ -21,7 +21,7 @@ class VerificationTokenNotification extends Notification implements ShouldQueue
 
     public function via($notifiable)
     {
-        return ['database', 'mail']; // You can add 'vonage' for SMS
+        return ['mail']; // You can add 'vonage' for SMS
     }
 
     public function toMail($notifiable)
@@ -31,13 +31,5 @@ class VerificationTokenNotification extends Notification implements ShouldQueue
             ->line('Your verification code is: ' . $this->token)
             ->line('This code expires in 1 hour.')
             ->line('If you did not request this, please ignore this message.');
-    }
-
-    public function toArray($notifiable)
-    {
-        return [
-            'message' => 'Your verification code is: ' . $this->token,
-            'expires_at' => now()->addHour()
-        ];
     }
 }

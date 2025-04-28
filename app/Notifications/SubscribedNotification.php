@@ -20,7 +20,7 @@ class SubscribedNotification extends Notification implements ShouldQueue
 
     public function via($notifiable)
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail($notifiable)
@@ -37,5 +37,19 @@ class SubscribedNotification extends Notification implements ShouldQueue
             ->line('Subscribe back to complete the full connection!')
             ->action('Login', $url)
             ->line('Thank you for being part of our community!');
+    }
+
+    public function toArray($notifiable)
+    {
+        $firstName = $this->subscriber->personalProfile->first_name ?? '';
+        $lastName = $this->subscriber->personalProfile->last_name ?? '';
+        $name = trim($firstName . ' ' . $lastName);
+
+        return [
+            'message' => "New subscriber: {$name} subscribed to your profile",
+            'action_url' => env('FRONTEND_URL'),
+            'subscriber_id' => $this->subscriber->id,
+            'type' => 'new_subscription',
+        ];
     }
 }

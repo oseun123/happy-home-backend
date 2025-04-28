@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Carbon;
+use OwenIt\Auditing\Auditable;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use OwenIt\Auditing\Auditable;
 
 class User extends Authenticatable implements AuditableContract
 {
@@ -27,7 +28,9 @@ class User extends Authenticatable implements AuditableContract
         'verification_expires_at',
         'is_verified',
         'reset_token',
-        'reset_expires_at'
+        'reset_expires_at',
+        'deletion_requested',
+        'scheduled_deletion_at'
     ];
 
     /**
@@ -190,5 +193,39 @@ class User extends Authenticatable implements AuditableContract
         return $this->subscriptionRecords()
             ->where('is_free_retry', true)
             ->count();
+    }
+
+    public function addressVerifications()
+    {
+        return $this->hasMany(AddressVerification::class);
+    }
+
+    public function latestAddressVerification()
+    {
+        return $this->hasOne(AddressVerification::class)->latestOfMany();
+    }
+
+    public function hasVerifiedAddress(): bool
+    {
+        return $this->latestAddressVerification !== null;
+    }
+
+    public function daysUntilDeletion()
+    {
+        // if deletion not requested or no scheduled date, bail out
+        if (! $this->deletion_requested || ! $this->scheduled_deletion_at) {
+            return false;
+        }
+
+        $now  = Carbon::now();
+        $then = Carbon::parse($this->scheduled_deletion_at);
+
+        // if the scheduled date is in the past, no days left
+        if ($now->greaterThanOrEqualTo($then)) {
+            return false;
+        }
+
+        // diffInDays gives whole days between now and then
+        return $now->diffInDays($then);
     }
 }

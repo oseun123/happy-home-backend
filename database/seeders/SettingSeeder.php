@@ -9,10 +9,25 @@ class SettingSeeder extends Seeder
 {
     public function run()
     {
+
+        Setting::create([
+            'key' => 'relationship_type',
+            'value' => [
+                "Marriage",
+                "Friend",
+                "Colleague",
+            ],
+        ]);
         Setting::create([
             'key' => 'subscribe_amount',
             'value' => [
                 "1000",
+            ],
+        ]);
+        Setting::create([
+            'key' => 'address_verification_amount',
+            'value' => [
+                "600",
             ],
         ]);
 

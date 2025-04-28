@@ -96,10 +96,8 @@ class PersonalProfileController extends Controller
         $data = $response->json();
         // dd($data, isset($data['entity']));
 
-
-
         if (!isset($data['entity'])) {
-            return null; // Returning null instead of error response
+            return ResponseHelper::withError('Phone Verification fails.'); // Returning null instead of error response
         }
 
         return PersonalProfile::create([
@@ -149,7 +147,7 @@ class PersonalProfileController extends Controller
         $user->settings()->create([
             'hide_age' => false,
             'hide_location' => false,
-            'matchup_settings' => 70,
+            'matchup_settings' => 30,
             'notify_me' => true,
             'deactive_account' => false,
             'short_bio' => null,

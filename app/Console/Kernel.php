@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('subscriptions:check-unreciprocated')->daily('13:30');
+        $schedule->command('users:delete-scheduled')->daily();
     }
 
     /**

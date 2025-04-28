@@ -20,7 +20,7 @@ class FreeRetryAvailableNotification extends Notification
 
     public function via($notifiable)
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail($notifiable)
@@ -42,5 +42,19 @@ class FreeRetryAvailableNotification extends Notification
             ->line("Take advantage of this opportunity and find a better match.")
             ->action('Use Free Retry', $url)
             ->line('Good luck, and happy matching!');
+    }
+
+    public function toArray($notifiable)
+    {
+        $firstName = $this->subscribedTo->personalProfile->first_name ?? '';
+        $lastName = $this->subscribedTo->personalProfile->last_name ?? '';
+        $name = trim($firstName . ' ' . $lastName);
+
+        return [
+            'message' => "Free retry available: {$name} didn't subscribe back",
+            'action_url' => env('FRONTEND_URL'),
+            'type' => 'free_retry',
+            'user_id' => $this->subscribedTo->id
+        ];
     }
 }

@@ -20,7 +20,7 @@ class ReminderToReciprocateNotification extends Notification
 
     public function via($notifiable)
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail($notifiable)
@@ -43,5 +43,20 @@ class ReminderToReciprocateNotification extends Notification
             ->line("If you don’t respond, the subscription will be canceled and {$name} will get a chance to subscribe to someone else.")
             ->action('Subscribe Back', $url)
             ->line('Thanks for being part of our community!');
+    }
+
+    public function toArray($notifiable)
+    {
+        $firstName = $this->subscriber->personalProfile->first_name ?? '';
+        $lastName = $this->subscriber->personalProfile->last_name ?? '';
+        $name = trim($firstName . ' ' . $lastName);
+
+        return [
+            'message' => "Reminder: {$name} subscribed to you - subscribe back within 24 hours",
+            'action_url' => env('FRONTEND_URL'),
+            'subscriber_id' => $this->subscriber->id,
+            'type' => 'reciprocation_reminder',
+            'expires_at' => now()->addHours(24)->toDateTimeString()
+        ];
     }
 }

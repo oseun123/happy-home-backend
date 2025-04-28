@@ -19,7 +19,8 @@ class MatchmakingController extends Controller
         $potentialMatches = User::with([
             'userBioData.religions',
             'contact',
-            'personalProfile'
+            'personalProfile',
+            'addressVerifications'
         ])
             ->where('id', '!=', $user->id);
 
@@ -160,6 +161,7 @@ class MatchmakingController extends Controller
         $isMutuallySubscribed = $currentUser->isMutuallySubscribedWith($otherUser);
         $isFavoritedByMe = $currentUser->hasFavorited($otherUser);
         $is_blocked = $currentUser->hasBlocked($otherUser);
+        $has_address_verified = $otherUser->hasVerifiedAddress();
         return [
             'id' => $otherUser->id,
             'name' => $otherUser->personalProfile->first_name,
@@ -173,7 +175,8 @@ class MatchmakingController extends Controller
             'has_subscribed_to_me' => $hasSubscribedToMe,
             'is_mutaul_to_me' => $isMutuallySubscribed,
             'is_address_verified' => false, // temporary
-            'is_blocked_by_me' => $is_blocked
+            'is_blocked_by_me' => $is_blocked,
+            'has_address_verified' => $has_address_verified
         ];
     }
 

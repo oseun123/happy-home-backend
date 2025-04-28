@@ -19,7 +19,7 @@ class SubscriptionConfirmedNotification extends Notification
 
     public function via($notifiable)
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail($notifiable)
@@ -37,5 +37,20 @@ class SubscriptionConfirmedNotification extends Notification
             ->greeting('Hello ' . $nameMe)
             ->line('You have successfully subscribed to ' . $name . '.')
             ->line('Thanks for being part of our community!');
+    }
+
+    public function toArray($notifiable)
+    {
+        $firstName = $this->subscribedUser->personalProfile->first_name ?? '';
+        $lastName = $this->subscribedUser->personalProfile->last_name ?? '';
+        $name = trim($firstName . ' ' . $lastName);
+
+        return [
+            'message' => "You successfully subscribed to $name",
+            'type' => 'subscription_confirmed',
+            'subscribed_user_id' => $this->subscribedUser->id,
+            'subscribed_user_name' => $name,
+            'icon' => '✅'
+        ];
     }
 }

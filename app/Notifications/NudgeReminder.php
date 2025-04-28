@@ -29,7 +29,7 @@ class NudgeReminder extends Notification
      */
     public function via($notifiable)
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     /**
@@ -62,15 +62,22 @@ class NudgeReminder extends Notification
     }
 
     /**
-     * Get the array representation of the notification.
+     * Get the array representation of the notification for database storage.
      *
      * @param  mixed  $notifiable
      * @return array
      */
     public function toArray($notifiable)
     {
+        $firstName = $this->subscriber->personalProfile->first_name ?? '';
+        $lastName = $this->subscriber->personalProfile->last_name ?? '';
+        $name = trim($firstName . ' ' . $lastName);
+
         return [
-            //
+            'message' => "{$name} nudged you to subscribe back",
+            'action_url' => env('FRONTEND_URL'),
+            'type' => 'nudge_reminder',
+            'subscriber_id' => $this->subscriber->id,
         ];
     }
 }
