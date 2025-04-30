@@ -22,6 +22,7 @@ class CreateSubscriptionsTable extends Migration
             $table->unsignedBigInteger('amount_paid')->nullable(); // store in kobo
             $table->boolean('verified')->default(false);
             $table->timestamp('verified_at')->nullable();
+            $table->string('reference')->nullable();
             $table->boolean('fully_subscribed')->default(false);
             $table->boolean('is_free_retry')->default(false);
             $table->boolean('free_retry_used')->default(false);

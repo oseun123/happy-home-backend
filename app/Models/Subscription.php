@@ -15,6 +15,7 @@ class Subscription extends Model
         'subscriber_id',
         'subscribed_to_id',
         'amount_paid',
+        'reference',
         'verified',
         'verified_at',
         'subscribed_at',
