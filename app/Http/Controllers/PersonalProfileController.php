@@ -40,10 +40,20 @@ class PersonalProfileController extends Controller
 
         // dd(config('cloudinary.cloud_url'));
 
-        $request->validate([
-            'phone_number' => 'required|string|unique:personal_profiles,phone_number',
-            'photo' => 'required|file|image|max:5120', // Max 5MB image file
-        ]);
+        if (env('APP_ENV') === 'local') {
+
+            $request->validate([
+                // 'phone_number' => 'required|string|unique:personal_profiles,phone_number',
+                'photo' => 'required|file|image|max:5120', // Max 5MB image file
+            ]);
+        } else {
+
+            $request->validate([
+                'phone_number' => 'required|string|unique:personal_profiles,phone_number',
+                'photo' => 'required|file|image|max:5120', // Max 5MB image file
+            ]);
+        }
+
 
         // Ensure user does not already have a personal profile
         if ($user->personalProfile) {
@@ -100,16 +110,32 @@ class PersonalProfileController extends Controller
             return ResponseHelper::withError('Phone Verification fails.'); // Returning null instead of error response
         }
 
-        return PersonalProfile::create([
-            'user_id' => $user->id,
-            'first_name' => $data['entity']['first_name'] ?? null,
-            'last_name' => $data['entity']['last_name'] ?? null,
-            'middle_name' => $data['entity']['middle_name'] ?? null,
-            'date_of_birth' => $data['entity']['date_of_birth'] ?? null,
-            'phone_number' => $data['entity']['phone_number'],
-            'gender' => $data['entity']['gender'] ?? null,
-            'photo' => $photoUrl, // Save photo URL
-        ]);
+
+        if (env('APP_ENV') === 'local') {
+            $faker = \Faker\Factory::create();
+
+            return PersonalProfile::create([
+                'user_id' => $user->id,
+                'first_name' => $faker->firstName(),
+                'last_name' => $faker->lastName(),
+                'middle_name' => $faker->optional()->firstName(),
+                'date_of_birth' => $faker->date('Y-m-d', '-20 years'), // Random DOB, at least 20 years old
+                'phone_number' => $data['entity']['phone_number'],
+                'gender' => $faker->randomElement(['Male', 'Female']),
+                'photo' => $photoUrl, // Save photo URL
+            ]);
+        } else {
+            return PersonalProfile::create([
+                'user_id' => $user->id,
+                'first_name' => $data['entity']['first_name'] ?? null,
+                'last_name' => $data['entity']['last_name'] ?? null,
+                'middle_name' => $data['entity']['middle_name'] ?? null,
+                'date_of_birth' => $data['entity']['date_of_birth'] ?? null,
+                'phone_number' => $data['entity']['phone_number'],
+                'gender' => $data['entity']['gender'] ?? null,
+                'photo' => $photoUrl, // Save photo URL
+            ]);
+        }
     }
 
 

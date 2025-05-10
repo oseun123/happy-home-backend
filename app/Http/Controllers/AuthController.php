@@ -20,6 +20,7 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|string|email|max:255|unique:users,email,NULL,id,deleted_at,NULL',
             'password' => 'required|string|min:8|confirmed',
+            'accept_terms' => 'required|boolean|in:1,true',
         ]);
 
         $user = User::withTrashed()->where('email', $request->email)->first();
@@ -85,7 +86,11 @@ class AuthController extends Controller
 
         return ResponseHelper::withSuccess(
             'Account verified successfully. You are now logged in.',
-            ['token' => $token]
+            [
+                'token' => $token,
+                'profile' => (new UserProfileController)->userProfileLogin($user, $user->id)
+
+            ]
         );
     }
 

@@ -10,6 +10,8 @@ class SettingSeeder extends Seeder
     public function run()
     {
 
+        Setting::truncate();
+
         Setting::create([
             'key' => 'relationship_type',
             'value' => [
@@ -300,6 +302,75 @@ class SettingSeeder extends Seeder
                 "Tagalog",
                 "Belarusian",
                 "Bosnian"
+            ]
+        ]);
+
+
+
+        Setting::create([
+            'key' => 'genotype',
+            'value' => [
+                "AA",
+                "AS",
+                "SS",
+                "AC",
+                "SC",
+            ],
+        ]);
+
+        Setting::create([
+            "key" => "religion",
+            "value" => [
+                "Christianity" => [
+                    "denominations" => [
+                        "Catholic",
+                        "Eastern Orthodox",
+                        "Oriental Orthodox",
+                        "Protestant",
+                        "Anglican",
+                        "Pentecostal",
+                        "Evangelical",
+                        "Baptist",
+                        "Methodist",
+                        "Lutheran",
+                        "Presbyterian",
+                        "Reformed",
+                        "Adventist",
+                        "Jehovah's Witness",
+                        "Seventh-day Adventist",
+                        "Quaker",
+                        "Mennonite",
+                        "Church of Christ",
+                        "Church of God",
+                        "Apostolic",
+                        "Charismatic",
+                        "Non-denominational",
+                        "Holiness Movement",
+                        "Assemblies of God",
+                        "Calvary Chapel",
+                        "Christian Science",
+                        "African Independent Churches",
+                        "Messianic Judaism",
+                        "Coptic Church",
+                        "Orthodox Church in America",
+                        "United Church of Christ",
+                        "Disciples of Christ",
+                        "Salvation Army",
+                        "Unitarian Universalism",
+                        "Others"
+                    ]
+                ],
+                "Islam" => [
+                    "denominations" => [
+                        "Sunni",
+                        "Shia",
+                        "Ahmadiyya",
+                        "Ibadi",
+                        "Others"
+                    ]
+                ],
+
+
             ]
         ]);
     }

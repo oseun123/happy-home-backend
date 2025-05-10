@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\StatsController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SuperAdminAuthController;
 
@@ -24,5 +25,14 @@ Route::prefix('superadmin')->group(function () {
         Route::post('/settings', [SettingController::class, 'store']);
         Route::put('/settings/{key}', [SettingController::class, 'update']);
         Route::delete('/settings/{key}', [SettingController::class, 'destroy']);
+
+
+        //admin dashboad
+
+        Route::get('dashboard-stats', [StatsController::class, 'getDashboardStats']);
+        Route::get('dashboard-stats-yearly', [StatsController::class, 'getMonthlySales']);
+        Route::get('dashboard-stats-monthly', [StatsController::class, 'getDailySalesForMonth']);
+        Route::get('dashboard-user-list', [StatsController::class, 'getUserList']);
+        Route::get('dashboard-user-list-deleted', [StatsController::class, 'getDeletedUserList']);
     });
 });
