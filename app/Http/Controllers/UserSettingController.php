@@ -5,9 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\UserSetting;
 use Illuminate\Http\Request;
+use App\Helpers\ResponseHelper;
+use App\Models\PersonalProfile;
 use Illuminate\Support\Facades\DB;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
-use App\Helpers\ResponseHelper;
 
 class UserSettingController extends Controller
 {
@@ -83,42 +84,84 @@ class UserSettingController extends Controller
 
     public function updatePhoto(Request $request, User $user, $field)
     {
-        $validPhotoFields = ['cover_photo', 'photo_1', 'photo_2', 'photo_3', 'photo_4'];
+        $validPhotoFields = ['cover_photo', 'photo_1', 'photo_2', 'photo_3', 'photo_4', 'photo'];
 
         if (!in_array($field, $validPhotoFields)) {
             return ResponseHelper::withError('Invalid photo field.');
         }
 
-        // If the request wants to remove the photo (null it)
-        if ($request->has('remove') && filter_var($request->input('remove'), FILTER_VALIDATE_BOOLEAN)) {
-            $setting = UserSetting::firstOrCreate(['user_id' => $user->id]);
-            $setting->{$field} = null;
-            $setting->save();
+        if ($field === 'photo') {
+            // If the request wants to remove the photo (null it)
+            if ($request->has('remove') && filter_var($request->input('remove'), FILTER_VALIDATE_BOOLEAN)) {
+                $personal = PersonalProfile::where('user_id', $user->id)->first();
+                $personal->photo = null;
+                $personal->save();
+                $setting = UserSetting::firstOrCreate(
+                    ['user_id' => $user->id],
+                    ['photo' => null] // Add the default photo value here
+                );
+                return ResponseHelper::withSuccess(ucwords(str_replace('_', ' ', $field)) . ' removed successfully.', $setting);
+            }
 
-            return ResponseHelper::withSuccess(ucwords(str_replace('_', ' ', $field)) . ' removed successfully.', $setting);
-        }
-
-        $request->validate([
-            'photo' => 'required|file|image|max:5120',
-        ]);
-
-        $folder = env('APP_NAME', 'HappyHomes') . '/user_settings/photos';
-
-        try {
-            $uploadedImage = Cloudinary::upload($request->file('photo')->getRealPath(), [
-                'folder' => $folder,
-                'resource_type' => 'image',
+            $request->validate([
+                'photo' => 'required|file|image|max:5120',
             ]);
 
-            $photoUrl = $uploadedImage->getSecurePath();
+            $folder = env('APP_NAME', 'HappyHomes') . '/user_settings/photos';
 
-            $setting = UserSetting::firstOrCreate(['user_id' => $user->id]);
-            $setting->{$field} = $photoUrl;
-            $setting->save();
+            try {
+                $uploadedImage = Cloudinary::upload($request->file('photo')->getRealPath(), [
+                    'folder' => $folder,
+                    'resource_type' => 'image',
+                ]);
 
-            return ResponseHelper::withSuccess(ucwords(str_replace('_', ' ', $field)) . ' updated successfully.', $setting);
-        } catch (\Exception $e) {
-            return ResponseHelper::withError('Failed to upload photo: ' . $e->getMessage());
+                $photoUrl = $uploadedImage->getSecurePath();
+
+                $personal = PersonalProfile::where('user_id', $user->id)->first();
+                $personal->photo = $photoUrl;
+                $personal->save();
+                $setting = UserSetting::firstOrCreate(
+                    ['user_id' => $user->id],
+                    ['photo' => $photoUrl] // Add the default photo value here
+                );
+
+                return ResponseHelper::withSuccess(ucwords(str_replace('_', ' ', $field)) . ' updated successfully.', $setting);
+            } catch (\Exception $e) {
+                return ResponseHelper::withError('Failed to upload photo: ' . $e->getMessage());
+            }
+        } else {
+
+            // If the request wants to remove the photo (null it)
+            if ($request->has('remove') && filter_var($request->input('remove'), FILTER_VALIDATE_BOOLEAN)) {
+                $setting = UserSetting::firstOrCreate(['user_id' => $user->id]);
+                $setting->{$field} = null;
+                $setting->save();
+
+                return ResponseHelper::withSuccess(ucwords(str_replace('_', ' ', $field)) . ' removed successfully.', $setting);
+            }
+
+            $request->validate([
+                'photo' => 'required|file|image|max:5120',
+            ]);
+
+            $folder = env('APP_NAME', 'HappyHomes') . '/user_settings/photos';
+
+            try {
+                $uploadedImage = Cloudinary::upload($request->file('photo')->getRealPath(), [
+                    'folder' => $folder,
+                    'resource_type' => 'image',
+                ]);
+
+                $photoUrl = $uploadedImage->getSecurePath();
+
+                $setting = UserSetting::firstOrCreate(['user_id' => $user->id]);
+                $setting->{$field} = $photoUrl;
+                $setting->save();
+
+                return ResponseHelper::withSuccess(ucwords(str_replace('_', ' ', $field)) . ' updated successfully.', $setting);
+            } catch (\Exception $e) {
+                return ResponseHelper::withError('Failed to upload photo: ' . $e->getMessage());
+            }
         }
     }
 }

@@ -21,7 +21,7 @@ class CreatePersonalProfilesTable extends Migration
             $table->string('middle_name')->nullable();
             $table->date('date_of_birth');
             $table->string('phone_number')->unique();
-            $table->string('photo');
+            $table->string('photo')->nullable();
             $table->enum('gender', ['Male', 'Female']);
             $table->timestamps();
         });
