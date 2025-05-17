@@ -23,6 +23,8 @@ class UserPreferredMatchController extends Controller
             'preferred_matches.*.gender' => 'required|array|min:1',
             'preferred_matches.*.age_range' => 'required|array|min:1',
             'preferred_matches.*.height_range' => 'required|array|min:1',
+            'preferred_matches.*.weight_range' => 'required|array|min:1',
+            'preferred_matches.*.language_spoken' => 'required|array|min:1',
             'preferred_matches.*.marital_status' => 'required|array|min:1',
             'preferred_matches.*.ethnicity' => 'required|array|min:1',
             'preferred_matches.*.genotype' => 'required|array|min:1',
@@ -53,6 +55,8 @@ class UserPreferredMatchController extends Controller
                 'gender' => $matchData['gender'],
                 'age_range' => $matchData['age_range'],
                 'height_range' => $matchData['height_range'],
+                'weight_range' => $matchData['weight_range'],
+                'language_spoken' => $matchData['language_spoken'],
                 'marital_status' => $matchData['marital_status'],
                 'ethnicity' => $matchData['ethnicity'],
                 'genotype' => $matchData['genotype'],
@@ -90,10 +94,14 @@ class UserPreferredMatchController extends Controller
 
     public function update(Request $request, User $user, $id)
     {
+        // dd($request);
         $request->validate([
             'relationship_type' => 'required|string',
             'gender' => 'nullable|array',
             'age_range' => 'nullable|array',
+            'height_range' => 'nullable|array',
+            'weight_range' => 'nullable|array',
+            'language_spoken' => 'nullable|array',
             'marital_status' => 'nullable|array',
             'ethnicity' => 'nullable|array',
             'genotype' => 'nullable|array',
@@ -110,6 +118,9 @@ class UserPreferredMatchController extends Controller
             'relationship_type' => $request->relationship_type,
             'gender' => $request->gender,
             'age_range' => $request->age_range,
+            'height_range' => $request->height_range,
+            'weight_range' => $request->weight_range,
+            'language_spoken' => $request->language_spoken,
             'marital_status' => $request->marital_status,
             'ethnicity' => $request->ethnicity,
             'genotype' => $request->genotype,
