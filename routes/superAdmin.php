@@ -5,9 +5,6 @@ use App\Http\Controllers\StatsController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SuperAdminAuthController;
 
-
-
-
 // super admin routes
 Route::prefix('superadmin')->group(function () {
 
