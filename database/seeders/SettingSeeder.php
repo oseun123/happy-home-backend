@@ -373,5 +373,13 @@ class SettingSeeder extends Seeder
 
             ]
         ]);
+
+        Setting::create([
+            'key' => 'gender',
+            'value' => [
+                "Male",
+                "Female",
+            ],
+        ]);
     }
 }

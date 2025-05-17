@@ -36,6 +36,9 @@ class UserProfileController extends Controller
 
         $profile = [
             'user_id' => $targetUserId,
+            'first_name' => optional($otherUser->personalProfile)->first_name,
+            'last_name' => optional($otherUser->personalProfile)->last_name,
+            'middle_name' => optional($otherUser->personalProfile)->middle_name,
             'photo' => optional($otherUser->personalProfile)->photo,
             'photo_1' => optional($otherUser->settings)->photo_1,
             'photo_2' => optional($otherUser->settings)->photo_2,
@@ -95,6 +98,9 @@ class UserProfileController extends Controller
 
         $profile = [
             'user_id' => $targetUserId,
+            'first_name' => optional($otherUser->personalProfile)->first_name,
+            'last_name' => optional($otherUser->personalProfile)->last_name,
+            'middle_name' => optional($otherUser->personalProfile)->middle_name,
             'photo' => optional($otherUser->personalProfile)->photo,
             'photo_1' => optional($otherUser->settings)->photo_1,
             'photo_2' => optional($otherUser->settings)->photo_2,
