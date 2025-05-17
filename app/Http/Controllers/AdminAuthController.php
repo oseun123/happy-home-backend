@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 use App\Notifications\SuperAdminNotification;
 use Illuminate\Support\Str;
 
-class SuperAdminAuthController extends Controller
+class AdminAuthController extends Controller
 {
     public function login(Request $request)
     {

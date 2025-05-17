@@ -3,17 +3,18 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\SettingController;
-use App\Http\Controllers\SuperAdminAuthController;
+use App\Http\Controllers\AdminAuthController;
+
 
 // super admin routes
 Route::prefix('superadmin')->group(function () {
 
-    Route::post('/login', [SuperAdminAuthController::class, 'login']);
-    Route::post('/forgot-password', [SuperAdminAuthController::class, 'forgotPassword']);
-    Route::post('/reset-password', [SuperAdminAuthController::class, 'resetPassword']);
+    Route::post('/login', [AdminAuthController::class, 'login']);
+    Route::post('/forgot-password', [AdminAuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AdminAuthController::class, 'resetPassword']);
 
     Route::middleware(['auth:sanctum', 'superadmin'])->group(function () {
-        Route::post('/logout', [SuperAdminAuthController::class, 'logout']);
+        Route::post('/logout', [AdminAuthController::class, 'logout']);
 
 
         // settings routes
