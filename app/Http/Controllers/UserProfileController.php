@@ -24,6 +24,8 @@ class UserProfileController extends Controller
 
         $is_blocked = $otherUser->hasBlocked($user);
 
+        $is_favorite_by_me = $user->hasFavorited($otherUser);
+
         // dd($is_blocked);
 
         if ($is_blocked) {
@@ -74,7 +76,8 @@ class UserProfileController extends Controller
 
             "contact_details" => $is_mutual ? ['address' => $otherUser->contact, 'phone' => optional($otherUser->personalProfile)->phone_number, 'email' => $otherUser->email]  : null,
 
-            'has_address_verified' => $has_address_verified
+            'has_address_verified' => $has_address_verified,
+            'is_favorite_by_me' => $is_favorite_by_me
 
         ];
 
@@ -87,6 +90,7 @@ class UserProfileController extends Controller
 
 
         $otherUser = User::findOrFail($targetUserId);
+        $is_favorite_by_me = $user->hasFavorited($otherUser);
 
         if (!$otherUser) {
 
@@ -138,7 +142,8 @@ class UserProfileController extends Controller
 
             "profile_setup" => isset($user->personalProfile) && count($user->preferredMatches) ? true : false,
             'has_address_verified' => $has_address_verified,
-            "is_account_deleted" => $user->daysUntilDeletion()
+            "is_account_deleted" => $user->daysUntilDeletion(),
+            'is_favorite_by_me' => $is_favorite_by_me
 
         ];
 
