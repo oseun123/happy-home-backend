@@ -25,6 +25,7 @@ class UserProfileController extends Controller
         $is_blocked = $otherUser->hasBlocked($user);
 
         $is_favorite_by_me = $user->hasFavorited($otherUser);
+        $is_subscribed_by_me = $user->hasSubscribedTo($otherUser);
 
         // dd($is_blocked);
 
@@ -77,7 +78,9 @@ class UserProfileController extends Controller
             "contact_details" => $is_mutual ? ['address' => $otherUser->contact, 'phone' => optional($otherUser->personalProfile)->phone_number, 'email' => $otherUser->email]  : null,
 
             'has_address_verified' => $has_address_verified,
-            'is_favorite_by_me' => $is_favorite_by_me
+            'is_favorite_by_me' => $is_favorite_by_me,
+            'is_mutual' => $is_mutual,
+            'is_subscribed_by_me' => $is_subscribed_by_me,
 
         ];
 
