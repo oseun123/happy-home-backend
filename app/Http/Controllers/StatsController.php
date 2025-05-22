@@ -142,6 +142,7 @@ class StatsController extends Controller
             'email' => $u->email,
             'subscribe_account_count' => $u->subscribers()->count(),
             'is_address_verified' => $u->hasVerifiedAddress(),
+            'id' => $u->id
         ]);
 
         // Replace the collection with the transformed one while keeping pagination structure
@@ -168,6 +169,7 @@ class StatsController extends Controller
             'email' => $u->email,
             'subscribe_account_count' => $u->subscribers()->count(),
             'is_address_verified' => $u->hasVerifiedAddress(),
+            'id' => $u->id
         ]);
 
         $users->setCollection($transformed);
