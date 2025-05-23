@@ -33,7 +33,7 @@ class AdminAuthController extends Controller
         // Generate a Sanctum token
         $token = $superAdmin->createToken('SuperAdmin-API-Token')->plainTextToken;
 
-        return ResponseHelper::withSuccess('Login successful', ['token' => $token, 'email' => $request->user('superadmins')->email, 'id' => $request->user('superadmins')->id]);
+        return ResponseHelper::withSuccess('Login successful', ['token' => $token, 'email' => $superAdmin->email, 'id' => $superAdmin->id]);
     }
 
     public function logout(Request $request)
