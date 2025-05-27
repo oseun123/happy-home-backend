@@ -33,7 +33,7 @@ class NotificationController extends Controller
         ]);
 
         $user = auth()->user();
-        dd($user);
+        // dd($user);
         $notifications = $user->unreadNotifications()
             ->whereIn('id', $request->notification_ids)
             ->get();
