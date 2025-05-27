@@ -81,6 +81,7 @@ class UserProfileController extends Controller
             'is_favorite_by_me' => $is_favorite_by_me,
             'is_mutual' => $is_mutual,
             'is_subscribed_by_me' => $is_subscribed_by_me,
+            "is_account_deleted" => $otherUser->daysUntilDeletion(),
 
         ];
 
