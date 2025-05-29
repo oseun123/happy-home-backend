@@ -16,8 +16,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
-        $schedule->command('subscriptions:check-unreciprocated')->daily('13:30');
-        $schedule->command('users:delete-scheduled')->daily();
+        $schedule->command('subscriptions:check-unreciprocated');
+        $schedule->command('users:delete-scheduled');
     }
 
     /**
