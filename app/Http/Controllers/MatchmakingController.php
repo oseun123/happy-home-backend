@@ -164,7 +164,7 @@ class MatchmakingController extends Controller
         $has_address_verified = $otherUser->hasVerifiedAddress();
         return [
             'id' => $otherUser->id,
-            'name' => $otherUser->personalProfile->first_name,
+            'name' => optional($otherUser->personalProfile)->first_name,
             'photo' => optional($otherUser->personalProfile)->photo,
             'cover_photo' => optional($otherUser->settings)->cover_photo,
             'short_bio' => optional($otherUser->settings)->short_bio,
