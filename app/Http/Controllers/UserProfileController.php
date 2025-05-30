@@ -23,6 +23,7 @@ class UserProfileController extends Controller
         }
 
         $is_blocked = $otherUser->hasBlocked($user);
+        $has_blocked_me = $user->hasBlocked($otherUser);
 
         $is_favorite_by_me = $user->hasFavorited($otherUser);
         $is_subscribed_by_me = $user->hasSubscribedTo($otherUser);
@@ -84,6 +85,7 @@ class UserProfileController extends Controller
             'is_subscribed_by_me' => $is_subscribed_by_me,
             'is_subscribed_to_me' => $is_subscribed_to_me,
             "is_account_deleted" => $otherUser->daysUntilDeletion(),
+            'has_blocked_me' => $has_blocked_me,
 
         ];
 
