@@ -148,7 +148,11 @@ class UserProfileController extends Controller
 
             "contact_details" => $is_mutual ? ['address' => $otherUser->contact, 'phone' => optional($otherUser->personalProfile)->phone_number, 'email' => $otherUser->email]  : null,
 
-            "profile_setup" => isset($user->personalProfile) && count($user->preferredMatches) ? true : false,
+            "profile_setup" => isset($user->personalProfile) && isset($user->userBioData)  && isset($user->hobbiesInterest) && isset($user->contact) ? true : false,
+            "personal_setup" => isset($user->personalProfile) ? true : false,
+            "biodata_setup" => isset($user->userBioData) ? true : false,
+            "contact_setup" => isset($user->contact) ? true : false,
+            "hobbies_interest_setup" => isset($user->hobbiesInterest) ? true : false,
             'has_address_verified' => $has_address_verified,
             "is_account_deleted" => $user->daysUntilDeletion(),
             'is_favorite_by_me' => $is_favorite_by_me
