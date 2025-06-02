@@ -38,6 +38,7 @@ class UserProfileController extends Controller
 
         $is_mutual = $user->isMutuallySubscribedWith($otherUser);
         $has_address_verified = $otherUser->hasVerifiedAddress();
+        $verified_address = optional($otherUser->latestAddressVerification)->dojah_data;
 
         $profile = [
             'user_id' => $targetUserId,
@@ -86,6 +87,7 @@ class UserProfileController extends Controller
             'is_subscribed_to_me' => $is_subscribed_to_me,
             "is_account_deleted" => $otherUser->daysUntilDeletion(),
             'has_blocked_me' => $has_blocked_me,
+            'verified_address' => $verified_address
 
         ];
 
@@ -107,6 +109,7 @@ class UserProfileController extends Controller
 
         $is_mutual = $user->isMutuallySubscribedWith($otherUser);
         $has_address_verified = $otherUser->hasVerifiedAddress();
+
 
         $profile = [
             'user_id' => $targetUserId,
@@ -156,6 +159,7 @@ class UserProfileController extends Controller
             'has_address_verified' => $has_address_verified,
             "is_account_deleted" => $user->daysUntilDeletion(),
             'is_favorite_by_me' => $is_favorite_by_me
+
 
         ];
 

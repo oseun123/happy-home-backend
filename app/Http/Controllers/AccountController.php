@@ -18,12 +18,12 @@ class AccountController extends Controller
 
         $user->update([
             'deletion_requested' => true,
-            'scheduled_deletion_at' => now()->addDays(7),
+            'scheduled_deletion_at' => now()->addDays(2),
         ]);
 
         $user->notify(new AccountDeletionScheduledNotification);
 
-        return ResponseHelper::withSuccess('Your account will be permanently deleted in 7 days.');
+        return ResponseHelper::withSuccess('Your account will be permanently deleted in 2 days.');
     }
 
 

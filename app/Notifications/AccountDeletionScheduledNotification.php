@@ -27,7 +27,7 @@ class AccountDeletionScheduledNotification extends Notification
             ->subject('Your Account Deletion is Scheduled')
             ->greeting('Hello ' . $name . ',')
             ->line('You have requested to delete your account.')
-            ->line('Your account is scheduled to be permanently deleted in 7 days.')
+            ->line('Your account is scheduled to be permanently deleted in 2 days.')
             ->line('If you did not request this or want to cancel the deletion, please contact support.')
             ->line('Thanks for being part of our community!')
             ->salutation('Regards, ' . config('app.name') . ' Team');
