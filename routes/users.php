@@ -84,6 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('nugde', [SubscriptionController::class, 'sendNudge']);
         Route::post('/block/{subscribedTo}', [SubscriptionController::class, 'toggleBlock']);
+        Route::post('/decline/{subscribedTo}', [SubscriptionController::class, 'delineRequest']);
         Route::post('favorite/{targetUserId}', [FavoriteController::class, 'toggleFavorite']);
         Route::get('profile/{targetUserId}', [UserProfileController::class, 'userProfile']);
         Route::get('favorites', [MatchmakingController::class, 'getFavoritesWithMatchScore']);

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Http;
 use App\Notifications\BlockStatusChanged;
 use App\Notifications\SubscribedNotification;
 use Unicodeveloper\Paystack\Facades\Paystack;
+use App\Notifications\DeclineRequestNotification;
 use App\Notifications\SubscriptionConfirmedNotification;
 
 class SubscriptionController extends Controller
@@ -262,5 +263,33 @@ class SubscriptionController extends Controller
         $subscribedTo->notify(new BlockStatusChanged($user, $userSub->is_blocked));
 
         return ResponseHelper::withSuccess("User successfully {$status}.");
+    }
+
+    public function delineRequest(Request $request, User $user, User $subscribedTo)
+    {
+
+        // Ensure subscription exists
+        $sub = Subscription::where('subscriber_id', $subscribedTo->id)
+            ->where('subscribed_to_id', $user->id)
+            ->where('verified', true)
+            ->first();
+
+        if (!$sub) {
+            return ResponseHelper::withError('Can only delicine users subscribed to you.');
+        }
+
+        // delcine request
+        $sub->update([
+            'free_retry_granted' => true,
+            'free_retry_available_at' => now(),
+        ]);
+
+        // Delete the old subscription (unsubscribe)
+        $sub->delete();
+
+        // Notify subscriber about free retry
+        $subscribedTo->notify(new DeclineRequestNotification($user));
+
+        return ResponseHelper::withSuccess("User successfully declined.");
     }
 }
