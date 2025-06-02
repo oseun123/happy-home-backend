@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Helpers\ResponseHelper;
+use App\Models\Subscription;
 
 class UserProfileController extends Controller
 {
@@ -29,6 +30,8 @@ class UserProfileController extends Controller
         $is_subscribed_by_me = $user->hasSubscribedTo($otherUser);
         $is_subscribed_to_me = $user->isSubscribedBy($otherUser);
 
+
+
         // dd($is_blocked);
 
         if ($is_blocked) {
@@ -39,6 +42,18 @@ class UserProfileController extends Controller
         $is_mutual = $user->isMutuallySubscribedWith($otherUser);
         $has_address_verified = $otherUser->hasVerifiedAddress();
         $verified_address = optional($otherUser->latestAddressVerification)->dojah_data;
+
+        $sub_record = $is_subscribed_to_me  && !$is_mutual ? Subscription::where('subscriber_id', $otherUser->id)->where('subscribed_to_id', $user->id)->where('fully_subscribed', 0)->first() : null;
+        if ($sub_record) {
+            $deadline = Carbon::parse($sub_record->reciprocation_deadline);
+            $daysRemaining = Carbon::now()->diffInDays($deadline, false); // false returns negative if past
+            // Optional: force it to 0 if it's already past
+            $daysRemaining = max(0, $daysRemaining);
+            $sub_to_me_record =   $daysRemaining;
+        } else {
+            $sub_to_me_record = null;
+        }
+
 
         $profile = [
             'user_id' => $targetUserId,
@@ -87,7 +102,8 @@ class UserProfileController extends Controller
             'is_subscribed_to_me' => $is_subscribed_to_me,
             "is_account_deleted" => $otherUser->daysUntilDeletion(),
             'has_blocked_me' => $has_blocked_me,
-            'verified_address' => $verified_address
+            'verified_address' => $verified_address,
+            'sub_to_me_record' =>  $sub_to_me_record
 
         ];
 

@@ -124,6 +124,12 @@ class User extends Authenticatable implements AuditableContract
             ->where('verified', true)
             ->exists();
     }
+    public function subscribedTo(User $otherUser)
+    {
+        return $this->subscriptions()
+            ->where('subscribed_to_id', $otherUser->id)
+            ->where('verified', true);
+    }
 
     public function isSubscribedBy(User $otherUser)
     {
@@ -131,6 +137,12 @@ class User extends Authenticatable implements AuditableContract
             ->where('subscriber_id', $otherUser->id)
             ->where('verified', true)
             ->exists();
+    }
+    public function subscribedBy(User $otherUser)
+    {
+        return $this->subscribers()
+            ->where('subscriber_id', $otherUser->id)
+            ->where('verified', true);
     }
 
     public function isMutuallySubscribedWith(User $otherUser)
