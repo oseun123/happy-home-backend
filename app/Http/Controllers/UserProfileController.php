@@ -49,9 +49,9 @@ class UserProfileController extends Controller
             $daysRemaining = Carbon::now()->diffInDays($deadline, false); // false returns negative if past
             // Optional: force it to 0 if it's already past
             $daysRemaining = max(0, $daysRemaining);
-            $sub_to_me_record =   $daysRemaining;
+            $sub_to_me_record_count =   $daysRemaining;
         } else {
-            $sub_to_me_record = null;
+            $sub_to_me_record_count = null;
         }
 
 
@@ -102,8 +102,9 @@ class UserProfileController extends Controller
             'is_subscribed_to_me' => $is_subscribed_to_me,
             "is_account_deleted" => $otherUser->daysUntilDeletion(),
             'has_blocked_me' => $has_blocked_me,
+            'is_blocked_by_me' => $is_blocked,
             'verified_address' => $verified_address,
-            'sub_to_me_record' =>  $sub_to_me_record
+            'sub_to_me_record_count' =>  $sub_to_me_record_count
 
         ];
 

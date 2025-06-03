@@ -102,6 +102,7 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsToMany(User::class, 'subscriptions', 'subscriber_id', 'subscribed_to_id')
             ->withPivot(['amount_paid', 'verified', 'verified_at', 'subscribed_at'])
             ->wherePivot('verified', true)
+            ->whereNull('subscriptions.deleted_at')
             ->withTimestamps();
     }
 
@@ -113,6 +114,7 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsToMany(User::class, 'subscriptions', 'subscribed_to_id', 'subscriber_id')
             ->withPivot(['amount_paid', 'verified', 'verified_at', 'subscribed_at'])
             ->wherePivot('verified', true)
+            ->whereNull('subscriptions.deleted_at')
             ->withTimestamps();
     }
 
