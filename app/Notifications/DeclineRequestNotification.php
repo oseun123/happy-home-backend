@@ -37,7 +37,7 @@ class DeclineRequestNotification extends Notification
         return (new MailMessage)
             ->subject('Free Subscription Retry Unlocked!')
             ->greeting("Hey {$nameMe},")
-            ->line("Unfortunately, {$name} didn’t subscribe back within the allowed time.")
+            ->line("Unfortunately, {$name} declinced your request.")
             ->line("But don’t worry – you’ve been granted a free retry to subscribe to someone else!")
             ->line("Take advantage of this opportunity and find a better match.")
             ->action('Use Free Retry', $url)
