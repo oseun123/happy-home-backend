@@ -24,7 +24,8 @@ class UserProfileController extends Controller
         }
 
         $is_blocked = $otherUser->hasBlocked($user);
-        $has_blocked_me = $user->hasBlocked($otherUser);
+        $has_blocked_me = $otherUser->hasBlocked($user);
+        $is_blocked_by_me = $user->hasBlocked($otherUser);
 
         $is_favorite_by_me = $user->hasFavorited($otherUser);
         $is_subscribed_by_me = $user->hasSubscribedTo($otherUser);
@@ -33,7 +34,7 @@ class UserProfileController extends Controller
 
 
         // dd($is_blocked);
-
+        // other user has blocked me
         if ($is_blocked) {
 
             return ResponseHelper::withError('You have been blocked to view this profile.');
@@ -102,7 +103,7 @@ class UserProfileController extends Controller
             'is_subscribed_to_me' => $is_subscribed_to_me,
             "is_account_deleted" => $otherUser->daysUntilDeletion(),
             'has_blocked_me' => $has_blocked_me,
-            'is_blocked_by_me' => $is_blocked,
+            'is_blocked_by_me' => $is_blocked_by_me,
             'verified_address' => $verified_address,
             'sub_to_me_record_count' =>  $sub_to_me_record_count
 
