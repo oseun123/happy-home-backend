@@ -34,7 +34,7 @@ class AuthController extends Controller
                 'name' => $request->name,
                 'password' => Hash::make($request->password),
                 'verification_token' => $verificationToken,
-                'verification_expires_at' => now()->addHour(), // Expire in 1 hour
+                'verification_expires_at' => now()->addMinutes(30), // Expire in 30 minutes
                 'is_verified' => false,
             ]);
         } else {
@@ -43,7 +43,7 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'verification_token' => $verificationToken,
-                'verification_expires_at' => now()->addHour(), // Expire in 1 hour
+                'verification_expires_at' => now()->addMinutes(30), // Expire in 30 minutes
                 'is_verified' => false,
             ]);
         }

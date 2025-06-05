@@ -29,7 +29,7 @@ class VerificationTokenNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('Your Verification Code')
             ->line('Your verification code is: ' . $this->token)
-            ->line('This code expires in 1 hour.')
+            ->line('This code expires in 30 minutes.')
             ->line('If you did not request this, please ignore this message.');
     }
 }
