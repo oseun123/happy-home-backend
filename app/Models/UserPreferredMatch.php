@@ -22,6 +22,8 @@ class UserPreferredMatch extends Model
         'genotype',
         'nationality',
         'state',
+        'hobbies',
+        'interest',
     ];
 
     protected $casts = [
@@ -30,6 +32,8 @@ class UserPreferredMatch extends Model
         'height_range' => 'array',
         'weight_range' => 'array',
         'language_spoken' => 'array',
+        'interest' => 'array',
+        'hobbies' => 'array',
         'marital_status' => 'array',
         'ethnicity' => 'array',
         'genotype' => 'array',

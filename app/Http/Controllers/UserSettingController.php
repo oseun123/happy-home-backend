@@ -32,7 +32,7 @@ class UserSettingController extends Controller
             'short_bio' => $request->short_bio,
             'hide_age' => $request->hide_age ?? false,
             'hide_location' => $request->hide_location ?? false,
-            'matchup_settings' => $request->matchup_settings ?? 70,
+            'matchup_settings' => $request->matchup_settings ?? 5,
             'notify_me' => $request->notify_me ?? true,
             'deactive_account' => $request->deactive_account ?? false,
         ]);

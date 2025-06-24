@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'default_threshold' => 30,
+    'default_threshold' => 5,
     'field_weights' => [
         'nationality' => 1.5,
         'gender' => 1.2,
