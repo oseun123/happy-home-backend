@@ -12,6 +12,7 @@
         "laravel/framework": "^8.75",
         "laravel/sanctum": "^2.15",
         "laravel/tinker": "^2.5",
+        "nnjeim/world": "^1.1",
         "owen-it/laravel-auditing": "^13.7",
         "unicodeveloper/laravel-paystack": "^1.2"
     },
