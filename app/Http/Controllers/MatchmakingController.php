@@ -64,6 +64,8 @@ class MatchmakingController extends Controller
             ->with('religions')
             ->get();
 
+        // dd($preferredMatches);
+
         if ($preferredMatches->isEmpty()) {
             return ResponseHelper::withError('No preferred matches found for the specified relationship type.');
         }
@@ -202,9 +204,13 @@ class MatchmakingController extends Controller
             'state' => 1.1,
             'age_range' => 1.1,
             'height_range' => 1.1,
+            'weight_range' => 1.1,
             'marital_status' => 1.0,
             'ethnicity' => 1.0,
             'genotype' => 1.0,
+            'language_spoken' => 1.0,
+            'hobbies' => 1.0,
+            'interest' => 1.0,
         ]);
 
         $userAge = $this->calculateAge(optional($otherUser->personalProfile)->date_of_birth);
@@ -217,17 +223,16 @@ class MatchmakingController extends Controller
                 'marital_status' => optional($otherUser->userBioData)->marital_status,
                 'ethnicity' => optional($otherUser->userBioData)->ethnicity,
                 'height_range' => optional($otherUser->userBioData)->height_range,
+                'weight_range' => optional($otherUser->userBioData)->weight_range,
                 'genotype' => optional($otherUser->userBioData)->genotype,
+                'language_spoken' => optional($otherUser->hobbiesInterest)->language_spoken,
+                'hobbies' => optional($otherUser->hobbiesInterest)->hobbies,
+                'interest' => optional($otherUser->hobbiesInterest)->interest,
             ];
 
-            // Log::info('Height comparison', [
-            //     'preferred' => $preferred->height_range,
-            //     'user' => optional($otherUser->userBioData)->height_range
-            // ]);
-
             foreach ($fieldsToCompare as $field => $otherValues) {
-                $preferredValues = (array) ($preferred->$field ?? []);
-                $otherValues = (array) $otherValues;
+                $preferredValues = array_map('mb_strtolower', (array) ($preferred->$field ?? []));
+                $otherValues = array_map('mb_strtolower', (array) $otherValues);
 
                 if (!empty($preferredValues)) {
                     $weight = $weights[$field] ?? 1.0;
@@ -256,23 +261,43 @@ class MatchmakingController extends Controller
             $preferredReligions = $preferred->religions ?? collect();
             $userReligions = optional($otherUser->userBioData)->religions ?? collect();
 
-            $preferredReligionsList = $preferredReligions->pluck('religion')->filter()->unique();
+            $preferredReligionsList = $preferredReligions
+                ->pluck('religion')
+                ->filter()
+                ->map(fn($val) => mb_strtolower($val))
+                ->unique();
+
+            $userReligionsList = $userReligions
+                ->pluck('religion')
+                ->filter()
+                ->map(fn($val) => mb_strtolower($val))
+                ->unique();
+
             if ($preferredReligionsList->isNotEmpty()) {
                 $weight = $weights['religion'] ?? 1.0;
                 $maxPossibleScore += $weight;
 
-                $userReligionsList = $userReligions->pluck('religion')->filter()->unique();
                 if ($userReligionsList->intersect($preferredReligionsList)->isNotEmpty()) {
                     $score += $weight;
                 }
             }
 
-            $preferredDenominations = $preferredReligions->pluck('denomination')->filter()->unique();
+            $preferredDenominations = $preferredReligions
+                ->pluck('denomination')
+                ->filter()
+                ->map(fn($val) => mb_strtolower($val))
+                ->unique();
+
+            $userDenominations = $userReligions
+                ->pluck('denomination')
+                ->filter()
+                ->map(fn($val) => mb_strtolower($val))
+                ->unique();
+
             if ($preferredDenominations->isNotEmpty()) {
                 $weight = $weights['denomination'] ?? 1.0;
                 $maxPossibleScore += $weight;
 
-                $userDenominations = $userReligions->pluck('denomination')->filter()->unique();
                 if ($userDenominations->intersect($preferredDenominations)->isNotEmpty()) {
                     $score += $weight;
                 }
@@ -282,9 +307,11 @@ class MatchmakingController extends Controller
         return $maxPossibleScore > 0 ? min(round(($score / $maxPossibleScore) * 100), 100) : 0;
     }
 
+
     protected function checkAgeMatch($preferredAgeRanges, $userAge)
     {
         $preferredAgeRanges = (array) $preferredAgeRanges;
+
 
         foreach ($preferredAgeRanges as $range) {
             if (str_contains($range, '-')) {
@@ -317,11 +344,15 @@ class MatchmakingController extends Controller
                 'ethnicity' => optional($otherUser->userBioData)->ethnicity,
                 'genotype' => optional($otherUser->userBioData)->genotype,
                 'height_range' => optional($otherUser->userBioData)->height_range,
+                'weight_range' => optional($otherUser->userBioData)->weight_range,
+                'language_spoken' => optional($otherUser->hobbiesInterest)->language_spoken,
+                'hobbies' => optional($otherUser->hobbiesInterest)->hobbies,
+                'interest' => optional($otherUser->hobbiesInterest)->interest,
             ];
 
             foreach ($fieldsToCompare as $field => $otherValues) {
-                $preferredValues = (array) ($preferred->$field ?? []);
-                $otherValues = (array) $otherValues;
+                $preferredValues = array_map('mb_strtolower', (array) ($preferred->$field ?? []));
+                $otherValues = array_map('mb_strtolower', (array) $otherValues);
 
                 $intersection = array_intersect($preferredValues, $otherValues);
                 if (!empty($intersection)) {
@@ -329,17 +360,25 @@ class MatchmakingController extends Controller
                 }
             }
 
+            // Age range
             if ($userAge && !empty($preferred->age_range)) {
                 if ($this->checkAgeMatch($preferred->age_range, $userAge)) {
                     $matchedCriteria['age_range'] = [$userAge];
                 }
             }
 
+            // Religion
             $preferredReligions = $preferred->religions ?? collect();
             $userReligions = optional($otherUser->userBioData)->religions ?? collect();
 
-            $religionMatch = $preferredReligions->pluck('religion')
-                ->intersect($userReligions->pluck('religion'))
+            $religionMatch = $preferredReligions
+                ->pluck('religion')
+                ->map(fn($val) => mb_strtolower($val))
+                ->intersect(
+                    $userReligions
+                        ->pluck('religion')
+                        ->map(fn($val) => mb_strtolower($val))
+                )
                 ->unique()
                 ->values()
                 ->toArray();
@@ -348,8 +387,15 @@ class MatchmakingController extends Controller
                 $matchedCriteria['religion'] = $religionMatch;
             }
 
-            $denominationMatch = $preferredReligions->pluck('denomination')
-                ->intersect($userReligions->pluck('denomination'))
+            // Denomination
+            $denominationMatch = $preferredReligions
+                ->pluck('denomination')
+                ->map(fn($val) => mb_strtolower($val))
+                ->intersect(
+                    $userReligions
+                        ->pluck('denomination')
+                        ->map(fn($val) => mb_strtolower($val))
+                )
                 ->unique()
                 ->values()
                 ->toArray();
@@ -361,6 +407,7 @@ class MatchmakingController extends Controller
 
         return $matchedCriteria;
     }
+
 
 
 

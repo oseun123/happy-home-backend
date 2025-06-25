@@ -46,20 +46,67 @@ class StatsController extends Controller
 
 
 
-    public function getMonthlySales()
-    {
-        $currentYear = Carbon::now()->year;
-        $previousYear = $currentYear - 1;
+    // public function getMonthlySales()
+    // {
+    //     $currentYear = Carbon::now()->year;
+    //     $previousYear = $currentYear - 1;
 
-        $monthlySales = collect(range(1, 12))->mapWithKeys(function ($month) use ($currentYear, $previousYear) {
+    //     $monthlySales = collect(range(1, 12))->mapWithKeys(function ($month) use ($currentYear, $previousYear) {
+    //         // Current year totals
+    //         $currentSub = Subscription::where('verified', true)
+    //             ->whereYear('created_at', $currentYear)
+    //             ->whereMonth('created_at', $month)
+    //             ->sum('amount_paid') / 100;
+
+    //         $currentAddr = AddressVerification::where('status', 'success')
+    //             ->whereYear('created_at', $currentYear)
+    //             ->whereMonth('created_at', $month)
+    //             ->sum('amount') / 100;
+
+    //         // Previous year totals
+    //         $prevSub = Subscription::where('verified', true)
+    //             ->whereYear('created_at', $previousYear)
+    //             ->whereMonth('created_at', $month)
+    //             ->sum('amount_paid') / 100;
+
+    //         $prevAddr = AddressVerification::where('status', 'success')
+    //             ->whereYear('created_at', $previousYear)
+    //             ->whereMonth('created_at', $month)
+    //             ->sum('amount') / 100;
+
+    //         return [
+    //             Carbon::create()->month($month)->format('F') => [
+    //                 'current_year' => $currentSub + $currentAddr,
+    //                 'previous_year' => $prevSub + $prevAddr,
+    //             ],
+    //         ];
+    //     });
+
+    //     return ResponseHelper::withSuccess('Data fetched successfully', [
+    //         'year' => $currentYear,
+    //         'previous_year' => $previousYear,
+    //         'monthly_sales_comparison' => $monthlySales,
+    //     ]);
+    // }
+
+    public function getMonthlySales(Request $request)
+    {
+        $request->validate([
+            'year' => 'nullable|integer|min:2000|max:' . Carbon::now()->year,
+        ]);
+
+        $year = $request->year ?? Carbon::now()->year;
+        $previousYear = $year - 1;
+
+        $monthlySales = collect(range(1, 12))->mapWithKeys(function ($month) use ($year, $previousYear) {
             // Current year totals
             $currentSub = Subscription::where('verified', true)
-                ->whereYear('created_at', $currentYear)
+                ->whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
                 ->sum('amount_paid') / 100;
 
             $currentAddr = AddressVerification::where('status', 'success')
-                ->whereYear('created_at', $currentYear)
+                ->whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
                 ->sum('amount') / 100;
 
@@ -83,21 +130,58 @@ class StatsController extends Controller
         });
 
         return ResponseHelper::withSuccess('Data fetched successfully', [
-            'year' => $currentYear,
+            'year' => $year,
             'previous_year' => $previousYear,
             'monthly_sales_comparison' => $monthlySales,
         ]);
     }
 
 
+
+    // public function getDailySalesForMonth(Request $request)
+    // {
+    //     $request->validate([
+    //         'month' => 'required|integer|min:1|max:12',
+    //     ]);
+
+    //     $month = $request->month;
+    //     $year = Carbon::now()->year;
+    //     $daysInMonth = Carbon::create($year, $month)->daysInMonth;
+
+    //     $dailySales = collect(range(1, $daysInMonth))->mapWithKeys(function ($day) use ($year, $month) {
+    //         $subscriptionSum = Subscription::where('verified', true)
+    //             ->whereYear('created_at', $year)
+    //             ->whereMonth('created_at', $month)
+    //             ->whereDay('created_at', $day)
+    //             ->sum('amount_paid') / 100;
+
+    //         $addressSum = AddressVerification::where('status', 'success')
+    //             ->whereYear('created_at', $year)
+    //             ->whereMonth('created_at', $month)
+    //             ->whereDay('created_at', $day)
+    //             ->sum('amount') / 100;
+
+    //         return [
+    //             $day => $subscriptionSum + $addressSum,
+    //         ];
+    //     });
+
+    //     return ResponseHelper::withSuccess('Record fetched successfully', [
+    //         'year' => $year,
+    //         'month' => Carbon::create()->month($month)->format('F'),
+    //         'daily_sales' => $dailySales,
+    //     ]);
+    // }
+
     public function getDailySalesForMonth(Request $request)
     {
         $request->validate([
             'month' => 'required|integer|min:1|max:12',
+            'year' => 'nullable|integer|min:2000|max:' . Carbon::now()->year,
         ]);
 
         $month = $request->month;
-        $year = Carbon::now()->year;
+        $year = $request->year ?? Carbon::now()->year;
         $daysInMonth = Carbon::create($year, $month)->daysInMonth;
 
         $dailySales = collect(range(1, $daysInMonth))->mapWithKeys(function ($day) use ($year, $month) {
@@ -124,6 +208,7 @@ class StatsController extends Controller
             'daily_sales' => $dailySales,
         ]);
     }
+
 
     public function getUserList(Request $request)
     {

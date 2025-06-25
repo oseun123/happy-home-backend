@@ -173,7 +173,7 @@ class PersonalProfileController extends Controller
         $user->settings()->create([
             'hide_age' => false,
             'hide_location' => false,
-            'matchup_settings' => 30,
+            'matchup_settings' => 5,
             'notify_me' => true,
             'deactive_account' => false,
             'short_bio' => null,
