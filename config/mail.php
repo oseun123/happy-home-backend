@@ -115,4 +115,6 @@ return [
         ],
     ],
 
+    'contact_receiver' => env('CONTACT_MAIL_RECEIVER'),
+
 ];

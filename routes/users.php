@@ -6,6 +6,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\SettingController;
 
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\ContactMailController;
 use App\Http\Controllers\MatchmakingController;
 use App\Http\Controllers\UserBioDataController;
 use App\Http\Controllers\UserContactController;
@@ -25,6 +26,7 @@ Route::post('/verify', [AuthController::class, 'verify']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+Route::post('/contact', [ContactMailController::class, 'submit']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -78,7 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('photos/{field}', [UserSettingController::class, 'updatePhoto']);
     });
 
-
+    // User Dashboard
     Route::prefix('/users/{user}/dashboard')->group(function () {
         Route::get('/matches', [MatchmakingController::class, 'getUserMatches']);
 
@@ -93,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('mutuals', [MatchmakingController::class, 'getMutaulsWithMatchScore']);
     });
 
+    // User Notifications
 
     Route::prefix('notifications')->group(function () {
 
@@ -101,6 +104,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('clear', [NotificationController::class, 'clearNotifications']);
         Route::post('mark-all-read', [NotificationController::class, 'markAllAsRead']);
     });
+
+
+
 
 
 
