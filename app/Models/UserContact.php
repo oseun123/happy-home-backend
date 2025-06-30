@@ -23,6 +23,10 @@ class UserContact extends Model implements AuditableContract
         'nationality',
     ];
 
+    protected $hidden = [
+        'house_number',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
