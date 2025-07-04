@@ -38,6 +38,32 @@ class MatchmakingController extends Controller
 
         return $this->innerLogic($request, $user, $potentialMatches);
     }
+    public function getUserSingleMatch(Request $request, User $user, User $targetUser)
+    {
+        $search = $request->query('search');
+
+        $potentialMatches = User::with([
+            'userBioData.religions',
+            'contact',
+            'personalProfile',
+            'addressVerifications'
+        ])
+            ->where('id', '=', $targetUser->id);
+
+        // for search query
+
+        if ($search) {
+            $potentialMatches->whereHas('personalProfile', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('first_name', 'like', '%' . $search . '%')
+                        ->orWhere('last_name', 'like', '%' . $search . '%')
+                        ->orWhere('middle_name', 'like', '%' . $search . '%');
+                });
+            });
+        }
+
+        return $this->innerLogic($request, $user, $potentialMatches);
+    }
 
 
 
