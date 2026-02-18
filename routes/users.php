@@ -83,6 +83,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // User Dashboard
     Route::prefix('/users/{user}/dashboard')->group(function () {
         Route::get('/matches', [MatchmakingController::class, 'getUserMatches']);
+        Route::get('/matches/{targetUser}', [MatchmakingController::class, 'getUserSingleMatch']);
 
         Route::post('nugde', [SubscriptionController::class, 'sendNudge']);
         Route::post('/block/{subscribedTo}', [SubscriptionController::class, 'toggleBlock']);
@@ -128,5 +129,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // address verification
         Route::post('address/{user}/initialize', [VerifyAddressController::class, 'initializePayment']);
         Route::post('address/verify', [VerifyAddressController::class, 'verifyPayment']);
+
+        // transaction history
+        Route::get('/transactions', [SubscriptionController::class, 'transactionHistory']);
     });
 });
