@@ -163,12 +163,13 @@ class SubscriptionController extends Controller
                 }
 
                 $subscription->update([
-                    'amount_paid' => $data['amount'],
-                    'verified' => true,
-                    'verified_at' => now(),
-                    'subscribed_at' => now(),
+                    'amount_paid'            => $data['amount'],
+                    'verified'               => true,
+                    'payment_status'         => 'success',
+                    'verified_at'            => now(),
+                    'subscribed_at'          => now(),
                     'reciprocation_deadline' => now()->addDays((int) Setting::where('key', 'subscribe_day')->value('value')[0] ?? 3),
-                    'data' => json_encode($paymentDetails['data']),
+                    'data'                   => json_encode($paymentDetails['data']),
                 ]);
 
                 $subscriber = User::find($subscription->subscriber_id);
@@ -291,5 +292,62 @@ class SubscriptionController extends Controller
         $subscribedTo->notify(new DeclineRequestNotification($user));
 
         return ResponseHelper::withSuccess("User successfully declined.");
+    }
+
+    /**
+     * GET /paystack/transactions
+     * Returns a combined, chronologically sorted transaction history for the authenticated user.
+     * Includes both subscription payments and address verification payments.
+     */
+    public function transactionHistory(Request $request)
+    {
+        $user = $request->user();
+
+        // Fetch subscription payments for this user
+        $subscriptions = Subscription::where('subscriber_id', $user->id)
+            ->whereNotNull('reference')
+            ->get()
+            ->map(function ($sub) {
+                return [
+                    'type'           => 'subscription',
+                    'reference'      => $sub->reference,
+                    'amount'         => $sub->amount_paid,
+                    'payment_status' => $sub->payment_status ?? ($sub->verified ? 'success' : 'pending'),
+                    'verified'       => $sub->verified,
+                    'verified_at'    => $sub->verified_at,
+                    'date'           => $sub->created_at,
+                    'description'    => 'Subscription payment',
+                    'meta'           => [
+                        'subscribed_to_id' => $sub->subscribed_to_id,
+                        'is_free_retry'    => $sub->is_free_retry,
+                    ],
+                ];
+            });
+
+        // Fetch address verification payments for this user
+        $addressVerifications = \App\Models\AddressVerification::where('user_id', $user->id)
+            ->whereNotNull('reference')
+            ->get()
+            ->map(function ($av) {
+                return [
+                    'type'           => 'address_verification',
+                    'reference'      => $av->reference,
+                    'amount'         => $av->amount,
+                    'payment_status' => $av->status,
+                    'verified'       => $av->verified_address,
+                    'verified_at'    => $av->updated_at,
+                    'date'           => $av->created_at,
+                    'description'    => 'Address verification payment',
+                    'meta'           => [],
+                ];
+            });
+
+        // Merge both collections and sort by date descending (most recent first)
+        $transactions = $subscriptions
+            ->concat($addressVerifications)
+            ->sortByDesc('date')
+            ->values();
+
+        return ResponseHelper::withSuccess('Transaction history retrieved.', $transactions);
     }
 }

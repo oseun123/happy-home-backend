@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
         $schedule->command('subscriptions:check-unreciprocated');
         $schedule->command('users:delete-scheduled');
+        $schedule->command('payments:verify-pending');
     }
 
     /**

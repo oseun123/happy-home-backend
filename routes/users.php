@@ -129,5 +129,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // address verification
         Route::post('address/{user}/initialize', [VerifyAddressController::class, 'initializePayment']);
         Route::post('address/verify', [VerifyAddressController::class, 'verifyPayment']);
+
+        // transaction history
+        Route::get('/transactions', [SubscriptionController::class, 'transactionHistory']);
     });
 });
