@@ -41,12 +41,16 @@ class UserContactController extends Controller
     }
 
     // Show user contact info
-    public function show(User $user)
+    public function show(Request $request, User $user)
     {
         $contact = $user->contact;
 
         if (!$contact) {
             return ResponseHelper::withError('User contact not found.');
+        }
+
+        if ($request->query('with_house_address') === 'true') {
+            $contact->makeVisible('house_number');
         }
 
         return ResponseHelper::withSuccess('User contact retrieved successfully.', $contact);
