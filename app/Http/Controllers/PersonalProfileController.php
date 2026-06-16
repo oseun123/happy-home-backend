@@ -108,8 +108,8 @@ class PersonalProfileController extends Controller
         // dd($data, isset($data['entity']));
 
         if (!isset($data['entity'])) {
-            // return ResponseHelper::withError('Phone Verification fails.'); // Returning null instead of error response
-            return null;
+            $errorMessage = $data['error'] ?? 'Phone verification failed.';
+            throw new \Exception($errorMessage);
         }
 
 
