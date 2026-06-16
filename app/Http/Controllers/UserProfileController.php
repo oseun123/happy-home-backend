@@ -75,8 +75,8 @@ class UserProfileController extends Controller
             'photo_3' => optional($otherUser->settings)->photo_3,
             'photo_4' => optional($otherUser->settings)->photo_4,
             'cover_photo' => optional($otherUser->settings)->cover_photo,
-            'state' =>  !$otherUser->settings->hide_location ? optional($otherUser->contact)->state : null,
-            'age' => !$otherUser->settings->hide_age ? $this->calculateAge(optional($otherUser->personalProfile)->date_of_birth) : null,
+            'state' =>  !optional($otherUser->settings)->hide_location ? optional($otherUser->contact)->state : null,
+            'age' => !optional($otherUser->settings)->hide_age ? $this->calculateAge(optional($otherUser->personalProfile)->date_of_birth) : null,
             'short_bio' => optional($otherUser->settings)->short_bio,
             'interest' => optional($otherUser->hobbiesInterest)->interest,
             'hobbies' => optional($otherUser->hobbiesInterest)->hobbies,
@@ -90,7 +90,7 @@ class UserProfileController extends Controller
                 "weight_range" => optional($otherUser->userBioData)->weight_range,
                 "religion" => optional($otherUser->userBioData)->religions,
                 "nationality" => optional($otherUser->contact)->nationality,
-                "age" => !$otherUser->settings->hide_age ? $this->calculateAge(optional($otherUser->personalProfile)->date_of_birth) : null,
+                "age" => !optional($otherUser->settings)->hide_age ? $this->calculateAge(optional($otherUser->personalProfile)->date_of_birth) : null,
 
 
             ],

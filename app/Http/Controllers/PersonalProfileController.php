@@ -104,6 +104,7 @@ class PersonalProfileController extends Controller
 
 
         $data = $response->json();
+        \Log::info('Dojah API response', ['phone' => $phone_number, 'response' => $data]);
         // dd($data, isset($data['entity']));
 
         if (!isset($data['entity'])) {
@@ -121,19 +122,20 @@ class PersonalProfileController extends Controller
                 'last_name' => $faker->lastName(),
                 'middle_name' => $faker->optional()->firstName(),
                 'date_of_birth' => $faker->date('Y-m-d', '-20 years'), // Random DOB, at least 20 years old
-                'phone_number' => $data['entity']['phone_number'],
+                'phone_number' => $data['entity']['phone_number'] ?? $phone_number,
                 'gender' => $faker->randomElement(['Male', 'Female']),
                 'photo' => $photoUrl, // Save photo URL
             ]);
         } else {
+            $entity = $data['entity'];
             return PersonalProfile::create([
                 'user_id' => $user->id,
-                'first_name' => $data['entity']['first_name'] ?? null,
-                'last_name' => $data['entity']['last_name'] ?? null,
-                'middle_name' => $data['entity']['middle_name'] ?? null,
-                'date_of_birth' => $data['entity']['date_of_birth'] ?? null,
-                'phone_number' => $data['entity']['phone_number'],
-                'gender' => $data['entity']['gender'] ?? null,
+                'first_name' => $entity['first_name'] ?? $entity['firstName'] ?? null,
+                'last_name' => $entity['last_name'] ?? $entity['lastname'] ?? null,
+                'middle_name' => $entity['middle_name'] ?? $entity['middleName'] ?? null,
+                'date_of_birth' => $entity['date_of_birth'] ?? $entity['dateOfBirth'] ?? null,
+                'phone_number' => $entity['phone_number'] ?? $entity['msisdn'] ?? $phone_number,
+                'gender' => $entity['gender'] ?? null,
                 'photo' => $photoUrl, // Save photo URL
             ]);
         }
