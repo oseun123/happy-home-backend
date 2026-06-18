@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\DojahWebhookController;
 
+Route::post('/webhooks/dojah', [DojahWebhookController::class, 'handle']);
 
 // super admin routes
 Route::prefix('superadmin')->group(function () {

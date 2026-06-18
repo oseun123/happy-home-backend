@@ -30,4 +30,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'dojah' => [
+        'app_id'         => env('DOJAH_APP_ID'),
+        'secret_key'     => env('DOJAH_SECRET_KEY'),
+        'webhook_secret' => env('DOJAH_WEBHOOK_SECRET'),
+    ],
+
 ];

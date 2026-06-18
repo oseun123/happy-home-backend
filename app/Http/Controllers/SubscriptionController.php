@@ -144,6 +144,18 @@ class SubscriptionController extends Controller
         $reference = $request->reference;
         $paystackSecretKey = config('paystack.secretKey');
 
+        // Check if this reference has already been successfully verified
+        $existingSubscription = Subscription::where('reference', $reference)
+            ->where('payment_status', 'success')
+            ->first();
+
+        if ($existingSubscription) {
+            return ResponseHelper::withSuccess('Payment verified', [
+                'status' => 'success',
+                'data' => json_decode($existingSubscription->data, true)
+            ]);
+        }
+
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $paystackSecretKey,

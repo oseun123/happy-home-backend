@@ -75,6 +75,15 @@ class VerifyAddressController extends Controller
 
         $reference = $request->reference;
 
+        // Check if this reference has already been successfully verified
+        $existingRecord = AddressVerification::where('reference', $reference)
+            ->where('status', 'success')
+            ->first();
+
+        if ($existingRecord && $existingRecord->dojah_data) {
+            return ResponseHelper::withSuccess('Address verified successfully', $existingRecord->dojah_data);
+        }
+
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . config('paystack.secretKey'),
@@ -106,9 +115,16 @@ class VerifyAddressController extends Controller
                 ]);
 
                 $verificationData = $dojahResponse->json();
+                \Log::info('Dojah Address Verification API response', [
+                    'longitude' => $longitude,
+                    'latitude' => $latitude,
+                    'response' => $verificationData,
+                ]);
 
                 if (!isset($verificationData['entity'])) {
-                    return ResponseHelper::withError('Address verification failed.');
+                    $error = $verificationData['error'] ?? 'Address verification failed.';
+                    $errorMessage = is_array($error) ? ($error['detail'] ?? json_encode($error)) : $error;
+                    return ResponseHelper::withError($errorMessage);
                 }
 
 
