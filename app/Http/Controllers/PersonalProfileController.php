@@ -45,12 +45,14 @@ class PersonalProfileController extends Controller
             $request->validate([
                 // 'phone_number' => 'required|string|unique:personal_profiles,phone_number',
                 'photo' => 'required|file|image|max:5120', // Max 5MB image file
+                'gender' => 'nullable|string|in:Male,Female',
             ]);
         } else {
 
             $request->validate([
                 'phone_number' => 'required|string|unique:personal_profiles,phone_number',
                 'photo' => 'required|file|image|max:5120', // Max 5MB image file
+                'gender' => 'nullable|string|in:Male,Female',
             ]);
         }
 
@@ -74,7 +76,7 @@ class PersonalProfileController extends Controller
             $photoUrl = $uploadedImage->getSecurePath();
 
             // Fetch and store user details from Dojah
-            $profile = $this->fetchAndStorePersonalProfile($request->phone_number, $user, $photoUrl);
+            $profile = $this->fetchAndStorePersonalProfile($request->phone_number, $user, $photoUrl, $request->gender);
 
             if (!$profile) {
                 throw new \Exception('Failed to create personal profile.');
@@ -90,7 +92,7 @@ class PersonalProfileController extends Controller
         }
     }
 
-    private function fetchAndStorePersonalProfile($phone_number, $user, $photoUrl)
+    private function fetchAndStorePersonalProfile($phone_number, $user, $photoUrl, $requestGender = null)
     {
         // dd(env('DOJAH_VERIFY_PHONE_URL'), env('DOJAH_APP_ID'), env('DOJAH_SECRET_KEY'));
         $response = Http::withHeaders([
@@ -115,6 +117,8 @@ class PersonalProfileController extends Controller
 
         if (env('APP_ENV') === 'local') {
             $faker = \Faker\Factory::create();
+            $gender = $requestGender ?: $faker->randomElement(['Male', 'Female']);
+            $gender = $this->normalizeGender($gender);
 
             return PersonalProfile::create([
                 'user_id' => $user->id,
@@ -123,11 +127,15 @@ class PersonalProfileController extends Controller
                 'middle_name' => $faker->optional()->firstName(),
                 'date_of_birth' => $faker->date('Y-m-d', '-20 years'), // Random DOB, at least 20 years old
                 'phone_number' => $data['entity']['phone_number'] ?? $phone_number,
-                'gender' => $faker->randomElement(['Male', 'Female']),
+                'gender' => $gender,
                 'photo' => $photoUrl, // Save photo URL
             ]);
         } else {
             $entity = $data['entity'];
+            $dojahGender = $entity['gender'] ?? null;
+            $gender = (!is_null($dojahGender) && $dojahGender !== '') ? $dojahGender : $requestGender;
+            $gender = $this->normalizeGender($gender);
+
             return PersonalProfile::create([
                 'user_id' => $user->id,
                 'first_name' => $entity['first_name'] ?? $entity['firstName'] ?? null,
@@ -135,10 +143,27 @@ class PersonalProfileController extends Controller
                 'middle_name' => $entity['middle_name'] ?? $entity['middleName'] ?? null,
                 'date_of_birth' => $entity['date_of_birth'] ?? $entity['dateOfBirth'] ?? null,
                 'phone_number' => $entity['phone_number'] ?? $entity['msisdn'] ?? $phone_number,
-                'gender' => $entity['gender'] ?? null,
+                'gender' => $gender,
                 'photo' => $photoUrl, // Save photo URL
             ]);
         }
+    }
+
+    private function normalizeGender($gender)
+    {
+        if (is_null($gender) || $gender === '') {
+            return null;
+        }
+
+        $firstChar = strtoupper(substr(trim($gender), 0, 1));
+        if ($firstChar === 'M') {
+            return 'Male';
+        }
+        if ($firstChar === 'F') {
+            return 'Female';
+        }
+
+        return $gender;
     }
 
 

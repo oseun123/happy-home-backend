@@ -80,6 +80,11 @@ class VerifyAddressController extends Controller
             ->where('status', 'success')
             ->first();
 
+        \Log::info('verify-payment-address', [
+            'reference' => $reference,
+            'existingRecord' => $existingRecord
+        ]);
+
         if ($existingRecord && $existingRecord->dojah_data) {
             return ResponseHelper::withSuccess('Address verified successfully', $existingRecord->dojah_data);
         }

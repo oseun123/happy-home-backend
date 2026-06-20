@@ -143,6 +143,10 @@ class SubscriptionController extends Controller
         $request->validate(['reference' => 'required|string']);
         $reference = $request->reference;
         $paystackSecretKey = config('paystack.secretKey');
+        \Log::info('Verify payment request', [
+            'reference' => $reference,
+            'paystackSecretKey' => $paystackSecretKey
+        ]);
 
         // Check if this reference has already been successfully verified
         $existingSubscription = Subscription::where('reference', $reference)
