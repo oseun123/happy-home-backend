@@ -1257,5 +1257,12 @@ class SettingSeeder extends Seeder
                 "Female",
             ],
         ]);
+
+        Setting::create([
+            'key' => 'max_lookup_attempts',
+            'value' => [
+                "3",
+            ],
+        ]);
     }
 }

@@ -6,6 +6,9 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\AdminAuthController;
 
 
+use App\Http\Controllers\BlacklistedPhoneNumberController;
+
+
 // super admin routes
 Route::prefix('superadmin')->group(function () {
 
@@ -23,6 +26,10 @@ Route::prefix('superadmin')->group(function () {
         Route::post('/settings', [SettingController::class, 'store']);
         Route::put('/settings/{key}', [SettingController::class, 'update']);
         Route::delete('/settings/{key}', [SettingController::class, 'destroy']);
+
+        // blacklist routes
+        Route::get('/settings/blacklist', [BlacklistedPhoneNumberController::class, 'index']);
+        Route::delete('/settings/blacklist/{phone_number}', [BlacklistedPhoneNumberController::class, 'destroy']);
 
 
         //admin dashboad

@@ -61,6 +61,17 @@ class PersonalProfileController extends Controller
         if ($user->personalProfile) {
             return ResponseHelper::withError('User already has a personal profile.');
         }
+
+        // Check if phone number is blacklisted
+        if ($request->phone_number) {
+            $blacklisted = \App\Models\BlacklistedPhoneNumber::where('phone_number', $request->phone_number)
+                ->where('is_blacklisted', true)
+                ->first();
+            if ($blacklisted) {
+                return ResponseHelper::withError('This phone number has been blacklisted due to multiple lookup failures. Please try a correctly registered phone number.', 403);
+            }
+        }
+
         DB::beginTransaction(); // Start transaction
 
         try {
@@ -95,23 +106,33 @@ class PersonalProfileController extends Controller
     private function fetchAndStorePersonalProfile($phone_number, $user, $photoUrl, $requestGender = null)
     {
         // dd(env('DOJAH_VERIFY_PHONE_URL'), env('DOJAH_APP_ID'), env('DOJAH_SECRET_KEY'));
-        $response = Http::withHeaders([
-            'Accept' => 'application/json',
-            'AppId' => env('DOJAH_APP_ID'),
-            'Authorization' => env('DOJAH_SECRET_KEY'),
-        ])->get(env('DOJAH_VERIFY_PHONE_URL'), [
-            'phone_number' => $phone_number,
-            'country_code' => 'NG', // Change as needed
-        ]);
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'AppId' => env('DOJAH_APP_ID'),
+                'Authorization' => env('DOJAH_SECRET_KEY'),
+            ])->get(env('DOJAH_VERIFY_PHONE_URL'), [
+                'phone_number' => $phone_number,
+                'country_code' => 'NG', // Change as needed
+            ]);
 
 
-        $data = $response->json();
-        \Log::info('Dojah API response', ['phone' => $phone_number, 'response' => $data]);
-        // dd($data, isset($data['entity']));
+            $data = $response->json();
+            \Log::info('Dojah API response', ['phone' => $phone_number, 'response' => $data]);
+            // dd($data, isset($data['entity']));
 
-        if (!isset($data['entity'])) {
-            $errorMessage = $data['error'] ?? 'Phone verification failed.';
-            throw new \Exception($errorMessage);
+            if (!isset($data['entity'])) {
+                $errorMessage = $data['error'] ?? 'Phone verification failed.';
+                throw new \Exception($errorMessage);
+            }
+
+            // On success, reset/delete attempts for the number
+            if ($phone_number) {
+                \App\Models\BlacklistedPhoneNumber::where('phone_number', $phone_number)->delete();
+            }
+        } catch (\Exception $e) {
+            $this->trackFailedLookup($phone_number, $e->getMessage());
+            throw $e;
         }
 
 
@@ -147,6 +168,28 @@ class PersonalProfileController extends Controller
                 'photo' => $photoUrl, // Save photo URL
             ]);
         }
+    }
+
+    private function trackFailedLookup($phone_number, $errorMessage)
+    {
+        if (empty($phone_number)) {
+            return;
+        }
+
+        $maxAttempts = (int) (\App\Models\Setting::where('key', 'max_lookup_attempts')->value('value')[0] ?? 3);
+
+        $record = \App\Models\BlacklistedPhoneNumber::firstOrNew(['phone_number' => $phone_number]);
+        $record->attempts = ($record->attempts ?? 0) + 1;
+
+        $newReason = '[' . now()->toDateTimeString() . '] Attempt ' . $record->attempts . ': ' . $errorMessage;
+        $record->reason = $record->reason ? $record->reason . "\n" . $newReason : $newReason;
+
+        if ($record->attempts >= $maxAttempts) {
+            $record->is_blacklisted = true;
+            $record->blacklisted_at = now();
+        }
+
+        $record->save();
     }
 
     private function normalizeGender($gender)
