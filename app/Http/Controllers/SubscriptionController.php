@@ -327,7 +327,7 @@ class SubscriptionController extends Controller
                 return [
                     'type'           => 'subscription',
                     'reference'      => $sub->reference,
-                    'amount'         => $sub->amount_paid,
+                    'amount'         => $sub->amount_paid ? ($sub->amount_paid) / 100 : 0.00,
                     'payment_status' => $sub->payment_status ?? ($sub->verified ? 'success' : 'pending'),
                     'verified'       => $sub->verified,
                     'verified_at'    => $sub->verified_at,
