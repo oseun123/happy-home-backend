@@ -32,16 +32,16 @@ Route::prefix('superadmin')->group(function () {
         Route::post('/logout', [AdminAuthController::class, 'logout']);
 
 
+        // blacklist routes
+        Route::get('/settings/blacklist', [BlacklistedPhoneNumberController::class, 'index']);
+        Route::delete('/settings/blacklist/{phone_number}', [BlacklistedPhoneNumberController::class, 'destroy']);
+
         // settings routes
         Route::get('/settings', [SettingController::class, 'index']);
         Route::get('/settings/{key}', [SettingController::class, 'show']);
         Route::post('/settings', [SettingController::class, 'store']);
         Route::put('/settings/{key}', [SettingController::class, 'update']);
         Route::delete('/settings/{key}', [SettingController::class, 'destroy']);
-
-        // blacklist routes
-        Route::get('/settings/blacklist', [BlacklistedPhoneNumberController::class, 'index']);
-        Route::delete('/settings/blacklist/{phone_number}', [BlacklistedPhoneNumberController::class, 'destroy']);
 
 
         //admin dashboad
