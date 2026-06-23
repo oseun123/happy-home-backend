@@ -21,6 +21,11 @@ class AddressVerification extends Model
         'verified_address',
         'paystack_data',
         'dojah_data',
+        'retry_count',
+        'retry_limit',
+        'dojah_reference_id',
+        'dojah_verification_status',
+        'verification_message',
     ];
 
     protected $casts = [

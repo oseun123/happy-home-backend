@@ -1264,5 +1264,12 @@ class SettingSeeder extends Seeder
                 "3",
             ],
         ]);
+
+        Setting::create([
+            'key' => 'address_verification_retry_limit',
+            'value' => [
+                "3",
+            ],
+        ]);
     }
 }

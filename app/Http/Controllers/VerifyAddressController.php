@@ -46,6 +46,9 @@ class VerifyAddressController extends Controller
             ],
         ];
 
+        $retryLimitSetting = Setting::where('key', 'address_verification_retry_limit')->value('value')[0] ?? 3;
+        $retryLimit = (int) $retryLimitSetting;
+
         try {
             $paymentUrl = Paystack::getAuthorizationUrl($data)->url;
 
@@ -55,7 +58,9 @@ class VerifyAddressController extends Controller
                 'amount' => $amount,
                 'status' => 'pending',
                 'longitude' => $request->longitude,
-                'latitude' => $request->latitude
+                'latitude' => $request->latitude,
+                'retry_limit' => $retryLimit,
+                'retry_count' => 0
             ]);
 
             return ResponseHelper::withSuccess("Payment initialized successfully", [
@@ -75,18 +80,37 @@ class VerifyAddressController extends Controller
 
         $reference = $request->reference;
 
-        // Check if this reference has already been successfully verified
-        $existingRecord = AddressVerification::where('reference', $reference)
-            ->where('status', 'success')
-            ->first();
+        // Check if this reference already exists
+        $record = AddressVerification::where('reference', $reference)->first();
 
         \Log::info('verify-payment-address', [
             'reference' => $reference,
-            'existingRecord' => $existingRecord
+            'existingRecord' => $record
         ]);
 
-        if ($existingRecord && $existingRecord->dojah_data) {
-            return ResponseHelper::withSuccess('Address verified successfully', $existingRecord->dojah_data);
+        if ($record) {
+            if ($record->verified_address) {
+                return ResponseHelper::withSuccess('Address verified successfully', $record->dojah_data);
+            }
+
+            // If the payment is already confirmed on our end (status is success)
+            if ($record->status === 'success') {
+                if ($record->retry_count < $record->retry_limit) {
+                    $widgetId = config('services.dojah.widget_id', '6a33ca593c44efdbfa8c48c4');
+                    $dojahUrl = "https://identity.dojah.io?widget_id={$widgetId}&metadata[payment_reference]={$reference}";
+
+                    return ResponseHelper::withSuccess('Payment successful. Redirect to Dojah widget.', [
+                        'authorization_url' => $dojahUrl,
+                        'reference' => $reference,
+                        'verified_address' => false,
+                        'retry_count' => $record->retry_count,
+                        'retry_limit' => $record->retry_limit,
+                        'verification_message' => $record->verification_message,
+                    ]);
+                } else {
+                    return ResponseHelper::withError('Address verification retry limit exceeded. Please make a new payment.');
+                }
+            }
         }
 
         try {
@@ -97,53 +121,46 @@ class VerifyAddressController extends Controller
 
             $paymentData = $response->json();
 
-            if ($paymentData['data']['status'] === 'success') {
-                $metadata = $paymentData['data']['metadata'];
-                $longitude = $metadata['longitude'];
-                $latitude = $metadata['latitude'];
+            if (isset($paymentData['data']) && $paymentData['data']['status'] === 'success') {
+                // update db
+                if (!$record) {
+                    // Fallback in case record wasn't created on initialization
+                    $metadata = $paymentData['data']['metadata'] ?? [];
+                    $longitude = $metadata['longitude'] ?? '';
+                    $latitude = $metadata['latitude'] ?? '';
+                    $amount = isset($paymentData['data']['amount']) ? ($paymentData['data']['amount'] / 100) : 500;
+                    $retryLimitSetting = Setting::where('key', 'address_verification_retry_limit')->value('value')[0] ?? 3;
+                    $retryLimit = (int) $retryLimitSetting;
 
-                // update  db
-                $record = AddressVerification::where('reference', $reference)->first();
-                $record->update([
-                    'status' => 'success',
-                    'paystack_data' => $paymentData
-                ]);
-
-                // Call Dojah API
-                $dojahResponse = Http::withHeaders([
-                    'Accept' => 'application/json',
-                    'AppId' => env('DOJAH_APP_ID'),
-                    'Authorization' => env('DOJAH_SECRET_KEY'),
-                ])->get(env('DOJAH_VERIFY_ADDRESS_URL'), [
-                    'longitude' => $longitude,
-                    'latitude' => $latitude
-                ]);
-
-                $verificationData = $dojahResponse->json();
-                \Log::info('Dojah Address Verification API response', [
-                    'longitude' => $longitude,
-                    'latitude' => $latitude,
-                    'response' => $verificationData,
-                ]);
-
-                if (!isset($verificationData['entity'])) {
-                    $error = $verificationData['error'] ?? 'Address verification failed.';
-                    $errorMessage = is_array($error) ? ($error['detail'] ?? json_encode($error)) : $error;
-                    return ResponseHelper::withError($errorMessage);
+                    $record = AddressVerification::create([
+                        'user_id' => $request->user() ? $request->user()->id : null,
+                        'reference' => $reference,
+                        'amount' => $amount,
+                        'status' => 'success',
+                        'longitude' => $longitude,
+                        'latitude' => $latitude,
+                        'paystack_data' => $paymentData,
+                        'retry_limit' => $retryLimit,
+                        'retry_count' => 0
+                    ]);
+                } else {
+                    $record->update([
+                        'status' => 'success',
+                        'paystack_data' => $paymentData
+                    ]);
                 }
 
+                $widgetId = config('services.dojah.widget_id', '6a33ca593c44efdbfa8c48c4');
+                $dojahUrl = "https://identity.dojah.io?widget_id={$widgetId}&metadata[payment_reference]={$reference}";
 
-
-                //Update our DB
-                $record = AddressVerification::where('reference', $reference)->first();
-                $record->update([
-                    'verified_address' => 1,
-                    'dojah_data' => $verificationData
+                return ResponseHelper::withSuccess('Payment verified successfully. Redirect to Dojah widget.', [
+                    'authorization_url' => $dojahUrl,
+                    'reference' => $reference,
+                    'verified_address' => false,
+                    'retry_count' => $record->retry_count,
+                    'retry_limit' => $record->retry_limit,
+                    'verification_message' => $record->verification_message,
                 ]);
-                $user = $record->user;
-                $user->notify(new AddressVerifiedNotification());
-
-                return ResponseHelper::withSuccess('Address verified successfully', $verificationData);
             }
 
             return ResponseHelper::withError('Payment not successful');

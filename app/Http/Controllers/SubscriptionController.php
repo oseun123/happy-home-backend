@@ -345,6 +345,17 @@ class SubscriptionController extends Controller
             ->whereNotNull('reference')
             ->get()
             ->map(function ($av) {
+                $meta = [
+                    'retry_count'          => $av->retry_count,
+                    'retry_limit'          => $av->retry_limit,
+                    'verification_message' => $av->verification_message,
+                ];
+
+                if ($av->status === 'success' && !$av->verified_address && $av->retry_count < $av->retry_limit) {
+                    $widgetId = config('services.dojah.widget_id', '6a33ca593c44efdbfa8c48c4');
+                    $meta['dojah_url'] = "https://identity.dojah.io?widget_id={$widgetId}&metadata[payment_reference]={$av->reference}";
+                }
+
                 return [
                     'type'           => 'address_verification',
                     'reference'      => $av->reference,
@@ -354,7 +365,7 @@ class SubscriptionController extends Controller
                     'verified_at'    => $av->updated_at,
                     'date'           => $av->created_at,
                     'description'    => 'Address verification payment',
-                    'meta'           => [],
+                    'meta'           => $meta,
                 ];
             });
 

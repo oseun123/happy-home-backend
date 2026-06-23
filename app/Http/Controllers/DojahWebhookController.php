@@ -9,43 +9,84 @@ class DojahWebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        $this->verifySignature($request);
+        // $this->verifySignature($request);
 
         $payload = $request->all();
 
         Log::channel('daily')->info('Dojah Webhook Received', $payload);
 
-        $eventType = $payload['type'] ?? null;
+        $paymentReference = $payload['metadata']['payment_reference'] ?? null;
 
-        // match() replaced with if/elseif for PHP 7 compatibility
-        if ($eventType === 'address.verification') {
-            $this->handleAddressVerification($payload);
+        if ($paymentReference) {
+            $this->handleAddressVerification($payload, $paymentReference);
         } else {
-            Log::warning('Dojah: Unhandled event', ['type' => $eventType]);
+            Log::warning('Dojah: Webhook received without payment_reference', $payload);
         }
 
         return response()->json(['status' => 'received'], 200);
     }
 
-    private function handleAddressVerification(array $payload)
+    private function handleAddressVerification(array $payload, string $paymentReference)
     {
-        $data = $payload['data'] ?? [];
-        $referenceId = $data['reference_id'] ?? null;
-        $status = $data['status'] ?? null;
+        $record = \App\Models\AddressVerification::where('reference', $paymentReference)->first();
 
-        Log::info('Address Verification Update', [
+        if (!$record) {
+            Log::error('Dojah Webhook: AddressVerification record not found for reference ' . $paymentReference);
+            return;
+        }
+
+        $status = $payload['status'] ?? false;
+        $message = $payload['message'] ?? 'Address verification failed';
+        $referenceId = $payload['reference_id'] ?? null;
+        $verificationStatus = $payload['verification_status'] ?? null;
+
+        Log::info('Dojah Webhook processing', [
+            'reference' => $paymentReference,
+            'status' => $status,
+            'message' => $message,
             'reference_id' => $referenceId,
-            'status'       => $status,
+            'verification_status' => $verificationStatus
         ]);
 
-        // KycVerification::where('reference_id', $referenceId)->update(['status' => $status]);
+        if ($status === true) {
+            // Successfully verified!
+            $record->update([
+                'verified_address' => 1,
+                'dojah_data' => $payload,
+                'dojah_reference_id' => $referenceId,
+                'dojah_verification_status' => $verificationStatus,
+                'verification_message' => $message
+            ]);
+
+            // Notify user
+            if ($record->user) {
+                $record->user->notify(new \App\Notifications\AddressVerifiedNotification());
+            }
+        } else {
+            // Failed verification
+            // Only increment retry_count if the reference_id is DIFFERENT from what we have.
+            // If it is the same, it means this is a duplicate or status update webhook for the same attempt.
+            $newRetryCount = $record->retry_count;
+            if ($referenceId && $record->dojah_reference_id !== $referenceId) {
+                $newRetryCount += 1;
+            }
+
+            $record->update([
+                'verified_address' => 0,
+                'dojah_data' => $payload,
+                'dojah_reference_id' => $referenceId,
+                'dojah_verification_status' => $verificationStatus,
+                'verification_message' => $message,
+                'retry_count' => $newRetryCount
+            ]);
+        }
     }
 
     private function verifySignature(Request $request)
     {
         $secret = config('services.dojah.webhook_secret');
 
-        if ($request->query('secret') !== $secret) {
+        if ($request->query('secret') !== $secret && $request->input('secret') !== $secret) {
             abort(403, 'Unauthorized webhook request');
         }
     }

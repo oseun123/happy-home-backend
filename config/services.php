@@ -34,6 +34,7 @@ return [
         'app_id'         => env('DOJAH_APP_ID'),
         'secret_key'     => env('DOJAH_SECRET_KEY'),
         'webhook_secret' => env('DOJAH_WEBHOOK_SECRET'),
+        'widget_id'      => env('DOJAH_WIDGET_ID', '6a33ca593c44efdbfa8c48c4'),
     ],
 
 ];

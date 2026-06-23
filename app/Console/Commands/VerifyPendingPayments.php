@@ -169,38 +169,8 @@ class VerifyPendingPayments extends Command
                 'paystack_data' => $paymentData,
             ]);
 
-            // Call Dojah to verify the address
-            $metadata  = $paymentData['data']['metadata'] ?? [];
-            $longitude = $metadata['longitude'] ?? $record->longitude;
-            $latitude  = $metadata['latitude'] ?? $record->latitude;
-
-            $dojahResponse = Http::withHeaders([
-                'Accept'        => 'application/json',
-                'AppId'         => env('DOJAH_APP_ID'),
-                'Authorization' => env('DOJAH_SECRET_KEY'),
-            ])->get(env('DOJAH_VERIFY_ADDRESS_URL'), [
-                'longitude' => $longitude,
-                'latitude'  => $latitude,
-            ]);
-
-            $verificationData = $dojahResponse->json();
-
-            if (!isset($verificationData['entity'])) {
-                $this->line("    ✗ Dojah address verification failed for [{$record->reference}].");
-                return;
-            }
-
-            $record->update([
-                'verified_address' => 1,
-                'dojah_data'       => $verificationData,
-            ]);
-
-            if ($record->user) {
-                $record->user->notify(new AddressVerifiedNotification());
-            }
-
-            $this->line("    ✅ Address [{$record->reference}] verified successfully.");
-            Log::info("[payments:verify-pending] Address verified: {$record->reference}");
+            $this->line("    ✅ Address Verification payment [{$record->reference}] verified successfully. Awaiting Dojah widget verification.");
+            Log::info("[payments:verify-pending] Address verification payment verified: {$record->reference}");
         } catch (\Exception $e) {
             $this->line("    ✗ Error verifying address [{$record->reference}]: {$e->getMessage()}");
             Log::error("[payments:verify-pending] Address error: {$record->reference}", [
