@@ -12,7 +12,7 @@ class UserProfileController extends Controller
 {
     //
 
-    public function userProfile(User $user, $targetUserId)
+    public function userProfile(Request $request, User $user, $targetUserId)
     {
 
 
@@ -43,13 +43,10 @@ class UserProfileController extends Controller
         $is_mutual = $user->isMutuallySubscribedWith($otherUser);
         $has_address_verified = $otherUser->hasVerifiedAddress();
 
-        $verified_address = optional($otherUser->latestAddressVerification)->dojah_data;
-        // remove some private details
-        if (is_array($verified_address)) {
-
-
-            unset($verified_address['entity']['formatted_address']);
-            unset($verified_address['entity']['address_components']['street_number']);
+        $verified_address = null;
+        if ($has_address_verified && $request->query('with_address') === 'true') {
+            $dojahData = optional($otherUser->latestAddressVerification)->dojah_data;
+            $verified_address = $dojahData['data']['address']['data']['location']['address_location']['name'] ?? null;
         }
 
         $sub_record = $is_subscribed_to_me  && !$is_mutual ? Subscription::where('subscriber_id', $otherUser->id)->where('subscribed_to_id', $user->id)->where('fully_subscribed', 0)->first() : null;

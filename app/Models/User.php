@@ -221,7 +221,7 @@ class User extends Authenticatable implements AuditableContract
 
     public function hasVerifiedAddress(): bool
     {
-        return $this->latestAddressVerification !== null;
+        return $this->latestAddressVerification !== null && (bool) $this->latestAddressVerification->verified_address;
     }
 
     public function daysUntilDeletion()
