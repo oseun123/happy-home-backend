@@ -216,7 +216,7 @@ class User extends Authenticatable implements AuditableContract
 
     public function latestAddressVerification()
     {
-        return $this->hasOne(AddressVerification::class)->latestOfMany();
+        return $this->hasOne(AddressVerification::class)->where('status', 'success')->latestOfMany();
     }
 
     public function hasVerifiedAddress(): bool
