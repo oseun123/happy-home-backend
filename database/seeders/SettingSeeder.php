@@ -1271,5 +1271,12 @@ class SettingSeeder extends Seeder
                 "3",
             ],
         ]);
+
+        Setting::create([
+            'key' => 'address_verification_review_emails',
+            'value' => [
+                "info@happyhomecreators.com",
+            ],
+        ]);
     }
 }

@@ -349,6 +349,7 @@ class SubscriptionController extends Controller
                     'retry_count'          => $av->retry_count,
                     'retry_limit'          => $av->retry_limit,
                     'verification_message' => $av->verification_message,
+                    'verification_process' => $av->dojah_verification_status,
                 ];
 
                 if ($av->status === 'success' && !$av->verified_address && $av->retry_count < $av->retry_limit) {
@@ -359,6 +360,7 @@ class SubscriptionController extends Controller
                 return [
                     'type'           => 'address_verification',
                     'reference'      => $av->reference,
+                    'dojah_reference' => $av->dojah_reference_id,
                     'amount'         => $av->amount,
                     'payment_status' => $av->status,
                     'verified'       => $av->verified_address,

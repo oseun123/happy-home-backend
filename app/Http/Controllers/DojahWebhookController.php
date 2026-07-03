@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use App\Models\Setting;
+use App\Notifications\AddressVerificationReviewNotification;
+use App\Notifications\AddressVerificationPendingNotification;
 
 class DojahWebhookController extends Controller
 {
@@ -63,7 +67,7 @@ class DojahWebhookController extends Controller
                 $record->user->notify(new \App\Notifications\AddressVerifiedNotification());
             }
         } else {
-            // Failed verification
+            // Failed or Pending verification
             // Only increment retry_count if the reference_id is DIFFERENT from what we have.
             // If it is the same, it means this is a duplicate or status update webhook for the same attempt.
             $newRetryCount = $record->retry_count;
@@ -79,7 +83,66 @@ class DojahWebhookController extends Controller
                 'verification_message' => $message,
                 'retry_count' => $newRetryCount
             ]);
+
+            // If verification status is Pending, send review emails
+            if (strtolower($verificationStatus) === 'pending') {
+                $this->sendPendingReviewEmails($record, $payload);
+            }
         }
+    }
+
+    /**
+     * Send review notification emails to admins and a pending notification to the user.
+     */
+    private function sendPendingReviewEmails($record, array $payload)
+    {
+        // Get admin emails from settings, default to Info@happyhomecreators.com
+        $adminEmails = $this->getAdminReviewEmails();
+
+        // Send review notification to each admin email
+        foreach ($adminEmails as $email) {
+            Notification::route('mail', $email)
+                ->notify(new AddressVerificationReviewNotification($record, $payload));
+        }
+
+        Log::info('Dojah Webhook: Pending review emails sent to admins', [
+            'reference' => $record->reference,
+            'admin_emails' => $adminEmails,
+        ]);
+
+        // Send pending notification to the user
+        if ($record->user) {
+            $record->user->notify(new AddressVerificationPendingNotification($payload));
+
+            Log::info('Dojah Webhook: Pending notification sent to user', [
+                'reference' => $record->reference,
+                'user_id' => $record->user->id,
+            ]);
+        }
+    }
+
+    /**
+     * Retrieve admin review email addresses from settings.
+     * Setting key: 'address_verification_review_emails'
+     * Falls back to default: Info@happyhomecreators.com
+     */
+    private function getAdminReviewEmails(): array
+    {
+        $defaultEmail = 'Info@happyhomecreators.com';
+
+        $setting = Setting::where('key', 'address_verification_review_emails')->first();
+
+        if ($setting && !empty($setting->value)) {
+            // value is cast to array by the Setting model
+            $emails = is_array($setting->value) ? $setting->value : [$setting->value];
+
+            // Filter out any empty values
+            $emails = array_filter($emails, fn($e) => !empty(trim($e)));
+
+            return !empty($emails) ? array_values($emails) : [$defaultEmail];
+        }
+
+        return [$defaultEmail];
     }
 
     private function verifySignature(Request $request)
