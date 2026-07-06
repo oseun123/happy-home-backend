@@ -101,6 +101,10 @@ class DojahWebhookController extends Controller
 
         // Send review notification to each admin email
         foreach ($adminEmails as $email) {
+            Log::info('Dojah Webhook: Sending review notification to admin', [
+                'reference' => $record->reference,
+                'admin_email' => $email,
+            ]);
             Notification::route('mail', $email)
                 ->notify(new AddressVerificationReviewNotification($record, $payload));
         }
