@@ -33,7 +33,7 @@ class AddressVerificationFailedNotification extends Notification
 
         $message = $this->payload['message'] ?? 'Address verification failed.';
         $retriesLeft = max(0, $this->record->retry_limit - $this->record->retry_count);
-        $url = config('app.frontend_url', 'http://localhost:3000') . '/transactions';
+        $url = config('app.frontend_url', 'http://localhost:3000') . '/user/transactions';
 
         $mailMessage = (new MailMessage)
             ->subject('Address Verification Failed')

@@ -341,10 +341,18 @@ class SubscriptionController extends Controller
             });
 
         // Fetch address verification payments for this user
-        $addressVerifications = \App\Models\AddressVerification::where('user_id', $user->id)
+        $allAddressVerifications = \App\Models\AddressVerification::where('user_id', $user->id)
             ->whereNotNull('reference')
-            ->get()
-            ->map(function ($av) {
+            ->get();
+
+        // Only the latest paid transaction should offer a re-verify URL
+        $latestPaidAv = $allAddressVerifications
+            ->where('status', 'success')
+            ->sortByDesc('created_at')
+            ->first();
+
+        $addressVerifications = $allAddressVerifications
+            ->map(function ($av) use ($latestPaidAv) {
                 $meta = [
                     'retry_count'          => $av->retry_count,
                     'retry_limit'          => $av->retry_limit,
@@ -352,7 +360,9 @@ class SubscriptionController extends Controller
                     'verification_process' => $av->dojah_verification_status,
                 ];
 
-                if ($av->status === 'success' && !$av->verified_address && $av->retry_count < $av->retry_limit) {
+                // Only show dojah_url on the latest paid transaction if it still needs verification
+                if ($latestPaidAv && $av->id === $latestPaidAv->id
+                    && !$av->verified_address && $av->retry_count < $av->retry_limit) {
                     $widgetId = config('services.dojah.widget_id', '6a33ca593c44efdbfa8c48c4');
                     $meta['dojah_url'] = "https://identity.dojah.io?widget_id={$widgetId}&metadata[payment_reference]={$av->reference}";
                 }

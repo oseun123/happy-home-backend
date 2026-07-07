@@ -104,6 +104,7 @@ class AddressVerificationTest extends TestCase
                 $rendered = strip_tags($mailData->render());
                 $this->assertStringContainsString('2 attempts left', $rendered);
                 $this->assertStringContainsString('Coordinates do not match.', $rendered);
+                $this->assertStringContainsString('/user/transactions', $rendered);
                 return true;
             }
         );
