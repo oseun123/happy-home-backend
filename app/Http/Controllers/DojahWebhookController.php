@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Notification;
 use App\Models\Setting;
 use App\Notifications\AddressVerificationReviewNotification;
 use App\Notifications\AddressVerificationPendingNotification;
+use App\Notifications\AddressVerificationFailedNotification;
 
 class DojahWebhookController extends Controller
 {
@@ -87,6 +88,13 @@ class DojahWebhookController extends Controller
             // If verification status is Pending, send review emails
             if (strtolower($verificationStatus) === 'pending') {
                 $this->sendPendingReviewEmails($record, $payload);
+            }
+
+            // If verification status is Failed, send failure email to user
+            if (strtolower($verificationStatus) === 'failed') {
+                if ($record->user) {
+                    $record->user->notify(new AddressVerificationFailedNotification($record, $payload));
+                }
             }
         }
     }
